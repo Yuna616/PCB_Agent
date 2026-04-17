@@ -1,0 +1,53 @@
+{
+  "manifest_version": 3,
+  "name": "EasyEDA PCB Coach",
+  "version": "1.2.0",
+  "description": "EasyEDA 원리도(Schematic) 설계를 단계별로 코칭하는 AI 어시스턴트",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://easyeda.com/*",
+    "https://*.easyeda.com/*",
+    "https://pro.easyeda.com/*",
+    "https://oshwlab.com/*",
+    "https://*.oshwlab.com/*",
+    "https://lceda.cn/*",
+    "https://*.lceda.cn/*",
+    "https://api.openai.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://easyeda.com/*",
+        "https://*.easyeda.com/*",
+        "https://oshwlab.com/*",
+        "https://*.oshwlab.com/*",
+        "https://lceda.cn/*",
+        "https://*.lceda.cn/*"
+      ],
+      "js": ["content.js"],
+      "css": ["panel.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>PCB Coach 설정</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      width: 300px;
+      background: #0d0d0f;
+      color: #e0e0e8;
+      font-family: 'IBM Plex Sans KR', sans-serif;
+      font-size: 13px;
+      padding: 0;
+    }
+
+    .header {
+      background: #111116;
+      padding: 16px 18px;
+      border-bottom: 1px solid #1e1e2a;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-icon {
+      color: #63ffb4;
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .header-text h1 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #f0f0f8;
+      letter-spacing: 0.3px;
+    }
+
+    .header-text p {
+      font-size: 11px;
+      color: #555568;
+      margin-top: 2px;
+    }
+
+    .content {
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      color: #888898;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    input[type="password"], input[type="text"] {
+      width: 100%;
+      background: #111116;
+      border: 1px solid #252535;
+      border-radius: 8px;
+      padding: 9px 36px 9px 12px;
+      color: #e0e0e8;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input:focus {
+      border-color: #2a4a38;
+    }
+
+    .toggle-visibility {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #444;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 2px;
+      transition: color 0.15s;
+    }
+
+    .toggle-visibility:hover { color: #888; }
+
+    .save-btn {
+      width: 100%;
+      padding: 10px;
+      background: linear-gradient(135deg, #0d2e20, #0a2018);
+      border: 1px solid #1e5c3a;
+      border-radius: 8px;
+      color: #63ffb4;
+      font-family: 'IBM Plex Sans KR', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .save-btn:hover {
+      background: linear-gradient(135deg, #103824, #0d2820);
+      box-shadow: 0 0 12px rgba(99,255,180,0.1);
+    }
+
+    .status-msg {
+      font-size: 11.5px;
+      text-align: center;
+      color: #63ffb4;
+      min-height: 16px;
+      transition: opacity 0.3s;
+    }
+
+    .status-msg.error { color: #ff6b6b; }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #1a1a24;
+    }
+
+    .how-to {
+      background: #0d0d12;
+      border: 1px solid #1a1a24;
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .how-to h3 {
+      font-size: 11px;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 8px;
+    }
+
+    .how-to ol {
+      padding-left: 16px;
+      color: #666;
+      font-size: 11.5px;
+      line-height: 1.8;
+    }
+
+    .how-to a {
+      color: #63ffb4;
+      text-decoration: none;
+    }
+
+    .how-to a:hover { text-decoration: underline; }
+
+    .status-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #333;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    .status-dot.active { background: #63ffb4; box-shadow: 0 0 6px #63ffb4; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-icon">⬡</div>
+    <div class="header-text">
+      <h1>PCB Coach</h1>
+      <p>EasyEDA 실시간 AI 코칭</p>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="field">
+      <label>OpenAI API Key</label>
+      <div class="input-wrap">
+        <input type="password" id="api-key-input" placeholder="sk-..." autocomplete="off" />
+        <button class="toggle-visibility" id="toggle-vis" title="표시/숨기기">👁</button>
+      </div>
+    </div>
+
+    <button class="save-btn" id="save-btn">저장하기</button>
+
+    <div class="status-msg" id="status-msg"></div>
+
+    <hr class="divider" />
+
+    <div class="how-to">
+      <h3>사용 방법</h3>
+      <ol>
+        <li><a href="https://platform.openai.com/api-keys" target="_blank">OpenAI API 키</a> 발급</li>
+        <li>위에 키를 입력하고 저장</li>
+        <li><a href="https://easyeda.com" target="_blank">EasyEDA</a>로 이동</li>
+        <li>화면 우측 패널에서 코칭 시작!</li>
+      </ol>
+    </div>
+
+    <div style="font-size:11px; color:#333; text-align:center;">
+      <span class="status-dot" id="conn-dot"></span>
+      <span id="conn-text">설정 안됨</span>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
