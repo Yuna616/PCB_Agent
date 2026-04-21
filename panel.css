@@ -942,3 +942,1552 @@
 #pcp-tab:hover {
   background: #161622;
 }
+
+/* ========== PCB_Agent (action layer) ========== */
+#pcb-agent-root {
+  position: fixed;
+  z-index: 1000000;
+  top: 80px;
+  right: 16px;
+  font-family: 'IBM Plex Sans KR', 'Segoe UI', sans-serif;
+  font-size: 12px;
+  color: #e4e4ef;
+  pointer-events: auto;
+}
+
+#pcb-agent-panel.pcb-agent-panel {
+  width: 380px;
+  max-height: min(720px, 92vh);
+  background: #0c0c12;
+  border: 1px solid #28283a;
+  border-radius: 12px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.65);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.pcb-agent-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #111118;
+  border-bottom: 1px solid #222230;
+}
+
+.pcb-agent-title {
+  flex: 1;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #7af5c9;
+}
+
+.pcb-agent-icon-btn {
+  border: none;
+  background: transparent;
+  color: #888;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.pcb-agent-icon-btn:hover {
+  color: #fff;
+  background: #222230;
+}
+
+.pcb-agent-body {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+}
+
+.pcb-agent-intro {
+  margin: 0 0 4px;
+  padding: 8px 10px;
+  background: #0a1210;
+  border: 1px solid #1e3d32;
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #9ab;
+}
+
+.pcb-agent-intro strong {
+  color: #7af5c9;
+}
+
+.pcb-agent-step {
+  border: 1px solid #252535;
+  border-radius: 10px;
+  padding: 10px 10px 12px;
+  background: #08080e;
+}
+
+.pcb-agent-step--chat {
+  background: #070710;
+}
+
+.pcb-agent-step-head {
+  font-weight: 600;
+  font-size: 12px;
+  color: #dbe;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pcb-agent-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #1a3d32;
+  color: #7af5c9;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.pcb-agent-step-desc {
+  margin: 0 0 8px;
+  font-size: 10px;
+  line-height: 1.45;
+  color: #778;
+}
+
+.pcb-agent-step-btn {
+  width: 100%;
+  margin-top: 2px;
+}
+
+.pcb-agent-step-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pcb-agent-output {
+  margin-top: 10px;
+  max-height: 260px;
+  overflow: auto;
+  border: 1px solid #2a2a3c;
+  border-radius: 8px;
+  background: #050508;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.pcb-agent-output-inner {
+  padding: 10px 12px;
+  color: #d0d0e0;
+}
+
+.pcb-agent-output-inner ul,
+.pcb-agent-output-inner ol {
+  margin: 4px 0 8px;
+  padding-left: 18px;
+}
+
+.pcb-agent-output-h {
+  margin: 10px 0 4px;
+  font-size: 11px;
+  color: #9cf0d8;
+  font-weight: 600;
+}
+
+.pcb-agent-output-h:first-child {
+  margin-top: 0;
+}
+
+.pcb-agent-output-lead {
+  margin: 0 0 8px;
+  color: #eee;
+  line-height: 1.55;
+}
+
+.pcb-agent-output-note {
+  margin: 0 0 8px;
+  font-size: 10px;
+  color: #889;
+}
+
+.pcb-agent-output-pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+}
+
+.pcb-agent-output-ol {
+  padding-left: 20px;
+}
+
+.pcb-agent-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+}
+
+.pcb-agent-table th,
+.pcb-agent-table td {
+  border: 1px solid #2a2a38;
+  padding: 4px 6px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.pcb-agent-table th {
+  background: #12121c;
+  color: #9ab;
+}
+
+.pcb-agent-chat-log {
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 8px;
+  border: 1px solid #2a2a3c;
+  border-radius: 8px;
+  background: #050508;
+  margin-bottom: 8px;
+  font-size: 11px;
+}
+
+.pcb-agent-chat-bubble {
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.pcb-agent-chat-bubble--user {
+  background: #152028;
+  border: 1px solid #2a4050;
+  margin-left: 12px;
+}
+
+.pcb-agent-chat-bubble--assistant {
+  background: #101418;
+  border: 1px solid #283428;
+  margin-right: 12px;
+}
+
+.pcb-agent-chat-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.pcb-agent-chat-input {
+  flex: 1;
+  min-height: 44px;
+  resize: vertical;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #2c2c3c;
+  background: #07070d;
+  color: #e8e8f2;
+  font-family: inherit;
+  font-size: 11px;
+}
+
+.pcb-agent-chat-send {
+  flex: 0 0 auto;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 11px;
+}
+
+.pcb-agent-advanced {
+  margin-top: 4px;
+  padding: 8px 10px;
+  border: 1px dashed #333;
+  border-radius: 8px;
+  background: #060608;
+}
+
+.pcb-agent-advanced-sum {
+  cursor: pointer;
+  font-size: 11px;
+  color: #888;
+}
+
+.pcb-agent-advanced[open] .pcb-agent-advanced-sum {
+  color: #aaa;
+  margin-bottom: 8px;
+}
+
+.pcb-agent-hint {
+  color: #8a8aa0;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.pcb-agent-ref-block {
+  background: #0a0a10;
+  border: 1px solid #252535;
+  border-radius: 8px;
+  padding: 10px 10px 8px;
+}
+
+.pcb-agent-ref-title {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #9a9ab0;
+}
+
+.pcb-agent-ref-note {
+  margin: 8px 0 0;
+  font-size: 10px;
+  line-height: 1.5;
+  color: #666680;
+}
+
+.pcb-agent-file-row {
+  position: relative;
+  align-items: center;
+}
+
+.pcb-agent-file-input {
+  position: absolute;
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  z-index: -1;
+}
+
+.pcb-agent-file-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #3a5060;
+  background: #121820;
+  color: #9cf0d8;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.pcb-agent-file-btn:hover {
+  border-color: #4a7088;
+}
+
+.pcb-agent-file-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 11px;
+  color: #b0b0c8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pcb-agent-file-clear {
+  flex: 0 0 auto;
+  min-width: auto;
+}
+
+.pcb-agent-file-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  max-height: 120px;
+  overflow-y: auto;
+  font-size: 11px;
+}
+
+.pcb-agent-file-empty {
+  color: #555568;
+  padding: 6px 0;
+  margin: 0;
+}
+
+.pcb-agent-file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 8px;
+  margin-bottom: 4px;
+  background: #07070d;
+  border-radius: 6px;
+  border: 1px solid #252535;
+}
+
+.pcb-agent-file-item-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+  color: #c8c8dd;
+}
+
+.pcb-agent-file-item-remove {
+  flex: 0 0 auto;
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  padding: 2px 6px;
+  font-size: 12px;
+  line-height: 1;
+  border-radius: 4px;
+}
+
+.pcb-agent-file-item-remove:hover {
+  color: #ff8a8a;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.pcb-agent-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 72px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #2c2c3c;
+  background: #07070d;
+  color: #e8e8f2;
+  font-family: inherit;
+}
+
+.pcb-agent-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pcb-agent-primary {
+  flex: 1;
+  min-width: 120px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #3dd9a8;
+  background: linear-gradient(180deg, #1a3d32 0%, #122820 100%);
+  color: #cfffee;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pcb-agent-secondary {
+  flex: 1;
+  min-width: 100px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #3a3a50;
+  background: #15151f;
+  color: #ccc;
+  cursor: pointer;
+}
+
+.pcb-agent-ghost {
+  flex: 1;
+  font-size: 11px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px dashed #3a3a50;
+  background: transparent;
+  color: #9ab;
+  cursor: pointer;
+}
+
+.pcb-agent-status {
+  font-size: 11px;
+  color: #9a9ab5;
+  min-height: 16px;
+}
+
+.pcb-agent-status--err {
+  color: #ff8a8a;
+}
+
+.pcb-agent-pre {
+  margin: 0;
+  padding: 10px;
+  max-height: 200px;
+  overflow: auto;
+  background: #050508;
+  border: 1px solid #262636;
+  border-radius: 8px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: #bdf;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.pcb-agent-issues ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+
+.pcb-agent-issue {
+  margin-bottom: 4px;
+}
+
+.pcb-agent-issue-none {
+  margin: 0;
+  color: #8f8;
+}
+
+.pcb-agent-tab {
+  border: 1px solid #2c2c3c;
+  background: #111118;
+  color: #7af5c9;
+  padding: 8px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+}
+
+.pcb-agent-overlay {
+  position: fixed;
+  left: 16px;
+  bottom: 80px;
+  max-width: 340px;
+  z-index: 999999;
+  pointer-events: none;
+}
+
+.pcb-agent-overlay-inner {
+  background: rgba(12, 14, 22, 0.94);
+  border: 1px solid #363650;
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #dcdce8;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
+}
+
+.pcb-agent-overlay-inner ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  font-size: 11px;
+  color: #aaa;
+}
+
+.pcb-agent-overlay-inner strong {
+  color: #ffb86c;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   도구 탭 바 (ERC / Parts / BOM)
+   ═══════════════════════════════════════════════════════════════ */
+
+#pcp-tool-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 6px 8px 0;
+  background: #0d0d12;
+  border-bottom: 1px solid #1a1a28;
+  flex-shrink: 0;
+}
+
+.pcp-tool-tab {
+  flex: 1;
+  padding: 5px 4px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  color: #555568;
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.pcp-tool-tab:hover {
+  color: #aaaacc;
+  background: rgba(255,255,255,0.03);
+}
+
+.pcp-tool-tab.active {
+  color: #63ffb4;
+  background: #111118;
+  border-color: #222234;
+  border-bottom-color: #111118;
+}
+
+/* ── 공통 도구 패널 ── */
+.pcp-tool-panel {
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.pcp-tool-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pcp-tool-header > span:first-child {
+  font-size: 12px;
+  font-weight: 600;
+  color: #d0d0e8;
+}
+
+.pcp-tool-hint {
+  font-size: 10.5px;
+  color: #44445a;
+}
+
+.pcp-tool-textarea {
+  width: 100%;
+  background: #0d0d12;
+  border: 1px solid #1e1e2e;
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: #c8c8e0;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.pcp-tool-textarea:focus { border-color: #2a3a50; }
+
+.pcp-tool-input {
+  flex: 1;
+  background: #0d0d12;
+  border: 1px solid #1e1e2e;
+  border-radius: 6px;
+  padding: 7px 10px;
+  color: #c8c8e0;
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.pcp-tool-input:focus { border-color: #2a3a50; }
+
+.pcp-tool-input-sm {
+  width: 120px;
+  background: #0d0d12;
+  border: 1px solid #1e1e2e;
+  border-radius: 6px;
+  padding: 5px 8px;
+  color: #c8c8e0;
+  font-size: 11px;
+  outline: none;
+}
+
+.pcp-tool-btns {
+  display: flex;
+  gap: 6px;
+}
+
+.pcp-tool-primary {
+  padding: 7px 14px;
+  background: linear-gradient(135deg, #0d2e20, #0a2018);
+  border: 1px solid #1e5c3a;
+  border-radius: 7px;
+  color: #63ffb4;
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pcp-tool-primary:hover { background: linear-gradient(135deg, #103824, #0d2820); }
+.pcp-tool-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.pcp-tool-secondary {
+  padding: 6px 12px;
+  background: #111118;
+  border: 1px solid #252535;
+  border-radius: 7px;
+  color: #888898;
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pcp-tool-secondary:hover { border-color: #363650; color: #aaaacc; }
+
+.pcp-tool-loading {
+  font-size: 11.5px;
+  color: #63ffb4;
+  padding: 4px 0;
+  animation: pcp-pulse 1.2s infinite;
+}
+
+.pcp-tool-err {
+  font-size: 11px;
+  color: #e888a0;
+  padding: 4px 0;
+}
+
+@keyframes pcp-pulse {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+
+/* ── ERC 결과 ── */
+.pcp-erc-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+.pcp-erc-summary.pass { background: rgba(99,255,180,0.06); border: 1px solid rgba(99,255,180,0.2); }
+.pcp-erc-summary.fail { background: rgba(255,80,80,0.06);  border: 1px solid rgba(255,80,80,0.2); }
+
+.pcp-erc-badge { font-size: 12px; font-weight: 700; }
+.pcp-erc-counts { font-size: 11.5px; color: #888; }
+.pcp-erc-counts strong.err  { color: #ff6b6b; }
+.pcp-erc-counts strong.warn { color: #ffcc44; }
+.pcp-erc-counts strong.info { color: #63b8ff; }
+
+.pcp-erc-issue {
+  padding: 8px 10px;
+  border-radius: 6px;
+  margin-bottom: 5px;
+  border-left: 3px solid transparent;
+  background: #0d0d14;
+}
+
+.pcp-erc-error   { border-left-color: #ff6b6b; }
+.pcp-erc-warning { border-left-color: #ffcc44; }
+.pcp-erc-info    { border-left-color: #63b8ff; }
+
+.pcp-erc-issue-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+
+.pcp-erc-sev  { font-size: 12px; }
+.pcp-erc-comp { font-size: 11px; font-weight: 600; color: #c8c8e0; font-family: 'IBM Plex Mono', monospace; }
+.pcp-erc-cat  { font-size: 10px; color: #44445a; margin-left: auto; }
+.pcp-erc-msg  { font-size: 11.5px; color: #aaaacc; margin: 2px 0; }
+.pcp-erc-fix  { font-size: 11px; color: #63ffb4; margin: 0; }
+.pcp-erc-none { font-size: 11.5px; color: #44445a; text-align: center; padding: 12px 0; }
+
+.pcp-tool-fix-btn {
+  width: 100%;
+  padding: 8px;
+  background: rgba(99,255,180,0.08);
+  border: 1px solid rgba(99,255,180,0.25);
+  border-radius: 7px;
+  color: #63ffb4;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.pcp-tool-fix-btn:hover { background: rgba(99,255,180,0.14); }
+.pcp-tool-fix-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── 부품 검색 결과 ── */
+.pcp-parts-search-row {
+  display: flex;
+  gap: 6px;
+}
+
+.pcp-parts-filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pcp-parts-check {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  color: #666678;
+  cursor: pointer;
+}
+
+.pcp-parts-rec {
+  font-size: 11.5px;
+  color: #63ffb4;
+  background: rgba(99,255,180,0.05);
+  border-radius: 5px;
+  padding: 6px 8px;
+  margin: 0 0 6px;
+}
+
+.pcp-parts-list { display: flex; flex-direction: column; gap: 6px; }
+
+.pcp-parts-item {
+  background: #0d0d14;
+  border: 1px solid #1c1c2c;
+  border-radius: 7px;
+  padding: 8px 10px;
+}
+
+.pcp-parts-item.basic { border-color: rgba(99,255,180,0.2); }
+
+.pcp-parts-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+
+.pcp-parts-lcsc {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: #63b8ff;
+}
+
+.pcp-parts-basic-badge {
+  font-size: 9px;
+  font-weight: 700;
+  color: #63ffb4;
+  background: rgba(99,255,180,0.12);
+  border: 1px solid rgba(99,255,180,0.25);
+  border-radius: 3px;
+  padding: 1px 4px;
+}
+
+.pcp-parts-conf { font-size: 9px; margin-left: auto; padding: 1px 4px; border-radius: 3px; }
+.pcp-conf-high   { color: #63ffb4; background: rgba(99,255,180,0.1); }
+.pcp-conf-medium { color: #ffcc44; background: rgba(255,204,68,0.1); }
+.pcp-conf-low    { color: #ff9966; background: rgba(255,153,102,0.1); }
+
+.pcp-parts-name { font-size: 11.5px; font-weight: 600; color: #c0c0d8; margin-bottom: 2px; }
+.pcp-parts-desc { font-size: 11px; color: #666678; margin-bottom: 4px; }
+
+.pcp-parts-meta {
+  display: flex;
+  gap: 8px;
+  font-size: 10.5px;
+  color: #555568;
+  flex-wrap: wrap;
+  margin-bottom: 5px;
+}
+
+.pcp-parts-note {
+  font-size: 10.5px;
+  color: #ffcc44;
+  margin: 3px 0;
+}
+
+.pcp-parts-copy {
+  padding: 4px 8px;
+  background: #111120;
+  border: 1px solid #252540;
+  border-radius: 4px;
+  color: #63b8ff;
+  font-size: 10.5px;
+  cursor: pointer;
+}
+
+.pcp-parts-copy:hover { border-color: #63b8ff; }
+.pcp-parts-none { font-size: 11.5px; color: #44445a; text-align: center; padding: 12px 0; }
+
+/* ── BOM 패널 ── */
+.pcp-bom-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pcp-bom-qty-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: #666678;
+}
+
+.pcp-bom-qty-input {
+  width: 60px;
+  background: #0d0d12;
+  border: 1px solid #1e1e2e;
+  border-radius: 5px;
+  padding: 4px 6px;
+  color: #c8c8e0;
+  font-size: 12px;
+  text-align: center;
+  outline: none;
+}
+
+.pcp-bom-summary {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 11.5px;
+  color: #666678;
+  padding: 6px 8px;
+  background: #0d0d14;
+  border-radius: 6px;
+  align-items: center;
+}
+
+.pcp-bom-total { color: #63ffb4; font-size: 12px; }
+.pcp-bom-warn  { font-size: 11px; color: #ffcc44; margin: 2px 0; }
+.pcp-bom-notes { font-size: 11px; color: #888898; margin: 2px 0; }
+
+.pcp-bom-actions { display: flex; gap: 6px; }
+
+.pcp-bom-tbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10.5px;
+  color: #aaaacc;
+}
+
+.pcp-bom-tbl th {
+  background: #0d0d14;
+  color: #666678;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 9.5px;
+  letter-spacing: 0.5px;
+  padding: 5px 6px;
+  text-align: left;
+  border-bottom: 1px solid #1a1a28;
+}
+
+.pcp-bom-tbl td {
+  padding: 4px 6px;
+  border-bottom: 1px solid #141420;
+  vertical-align: middle;
+}
+
+.pcp-bom-tbl td code {
+  font-family: 'IBM Plex Mono', monospace;
+  color: #63b8ff;
+  font-size: 10px;
+}
+
+.pcp-bom-tbl tr:hover td { background: rgba(255,255,255,0.02); }
+.pcp-bom-mpn { color: #888; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── PCB 설계 체크리스트 ───────────────────────────────────────────────── */
+.pcb-agent-step--checklist {
+  border-top: 1px solid #1e1e2e;
+  padding-top: 8px;
+  margin-top: 4px;
+}
+
+.pcb-checklist-group {
+  font-size: 10px;
+  font-weight: 700;
+  color: #63ffb4;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin: 8px 0 4px;
+  padding-left: 2px;
+}
+
+.pcb-checklist-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 11.5px;
+  color: #b0b0c8;
+  padding: 2px 0;
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.pcb-checklist-item input[type="checkbox"] {
+  margin-top: 2px;
+  accent-color: #63ffb4;
+  flex-shrink: 0;
+}
+
+.pcb-checklist-item:hover {
+  color: #e0e0f0;
+}
+
+/* ── 빠른 질문 버튼 ───────────────────────────────────────────────────── */
+.pcb-agent-step--quickbtns {
+  border-top: 1px solid #1e1e2e;
+  padding-top: 8px;
+  margin-top: 4px;
+}
+
+.pcb-quickbtn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.pcb-quickbtn {
+  background: #13131f;
+  border: 1px solid #2a2a40;
+  border-radius: 6px;
+  color: #a0a0c0;
+  font-size: 11px;
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+  line-height: 1.5;
+}
+
+.pcb-quickbtn:hover {
+  background: #1e1e35;
+  border-color: #63ffb4;
+  color: #e0e0f0;
+}
+
+.pcb-quickbtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PCB 에이전트 — 탭 기반 UI (v3)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 루트 & 패널 ─────────────────────────────────────────────────────────── */
+#pcb-agent-root {
+  all: initial;
+  font-family: 'IBM Plex Sans KR', -apple-system, sans-serif;
+}
+
+.pcb-panel {
+  position: fixed;
+  top: 72px;
+  right: 18px;
+  width: 360px;
+  height: 580px;
+  min-width: 300px;
+  min-height: 380px;
+  max-height: 90vh;
+  background: #0b0b10;
+  border: 1px solid #252535;
+  border-radius: 12px;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.7), 0 0 0 1px rgba(99,255,180,0.07);
+  z-index: 2147483647;
+  display: flex;
+  flex-direction: column;
+  color: #d8d8e8;
+  font-size: 13px;
+  overflow: hidden;
+  resize: both;
+  transition: box-shadow 0.2s;
+}
+
+.pcb-panel:hover {
+  box-shadow: 0 12px 48px rgba(0,0,0,0.8), 0 0 0 1px rgba(99,255,180,0.14);
+}
+
+/* ── 헤더 ────────────────────────────────────────────────────────────────── */
+.pcb-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 14px 9px 16px;
+  background: #0f0f18;
+  border-bottom: 1px solid #1e1e2c;
+  border-radius: 12px 12px 0 0;
+  flex-shrink: 0;
+  user-select: none;
+  cursor: move;
+}
+
+.pcb-logo {
+  font-size: 13px;
+  font-weight: 700;
+  color: #63ffb4;
+  letter-spacing: 0.4px;
+}
+
+.pcb-header-actions {
+  display: flex;
+  gap: 3px;
+}
+
+.pcb-hbtn {
+  background: none;
+  border: none;
+  color: #555568;
+  cursor: pointer;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+  font-family: inherit;
+}
+.pcb-hbtn:hover { background: #1e1e30; color: #c0c0d8; }
+
+/* ── 탭 바 ───────────────────────────────────────────────────────────────── */
+.pcb-tabbar {
+  display: flex;
+  background: #0d0d16;
+  border-bottom: 1px solid #1a1a28;
+  flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.pcb-tabbar::-webkit-scrollbar { display: none; }
+
+.pcb-tab {
+  flex: 1;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 8px 4px;
+  font-size: 11.5px;
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  color: #555568;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  text-align: center;
+}
+.pcb-tab:hover {
+  color: #9090b8;
+  background: rgba(255,255,255,0.03);
+}
+.pcb-tab--active {
+  color: #63ffb4;
+  border-bottom-color: #63ffb4;
+  font-weight: 600;
+}
+
+/* ── 상태바 ─────────────────────────────────────────────────────────────── */
+.pcb-status {
+  display: none;
+  padding: 5px 14px;
+  font-size: 11.5px;
+  color: #63ffb4;
+  background: rgba(99,255,180,0.06);
+  border-bottom: 1px solid rgba(99,255,180,0.1);
+  flex-shrink: 0;
+}
+.pcb-status--err {
+  color: #ff7070;
+  background: rgba(255,80,80,0.07);
+  border-bottom-color: rgba(255,80,80,0.15);
+}
+
+/* ── 탭 패널 공통 ────────────────────────────────────────────────────────── */
+.pcb-tabpane {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+}
+.pcb-tabpane--active {
+  display: flex;
+}
+
+/* ════════════════════════════════════════════════
+   탭 1: AI 코치
+   ════════════════════════════════════════════════ */
+#pcb-pane-chat {
+  flex-direction: column;
+}
+
+.pcb-chat-log {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 12px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: #252535 transparent;
+}
+.pcb-chat-log::-webkit-scrollbar { width: 4px; }
+.pcb-chat-log::-webkit-scrollbar-track { background: transparent; }
+.pcb-chat-log::-webkit-scrollbar-thumb { background: #252535; border-radius: 2px; }
+
+.pcb-chat-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #44445a;
+  font-size: 12.5px;
+  line-height: 1.6;
+  padding: 20px;
+}
+
+/* 채팅 버블 */
+.pcb-bubble {
+  max-width: 90%;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  word-break: break-word;
+}
+.pcb-bubble--user {
+  align-self: flex-end;
+  background: #1a2640;
+  color: #b0c8f0;
+  border-radius: 10px 10px 2px 10px;
+}
+.pcb-bubble--assistant {
+  align-self: flex-start;
+  background: #111120;
+  color: #d0d0e8;
+  border: 1px solid #1e1e2e;
+  border-radius: 2px 10px 10px 10px;
+}
+
+/* 버블 내부 마크다운 요소 */
+.pcb-bubble--assistant .pcb-code {
+  background: #080810;
+  border: 1px solid #222232;
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin: 6px 0;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11.5px;
+  color: #a0e0ff;
+  overflow-x: auto;
+  white-space: pre;
+}
+.pcb-inline-code {
+  background: #141424;
+  color: #63b8ff;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+}
+.pcb-list-item {
+  padding: 1px 0 1px 4px;
+}
+.pcb-list-num {
+  padding-left: 4px;
+}
+
+/* 입력창 */
+.pcb-chat-input-row {
+  display: flex;
+  gap: 6px;
+  padding: 8px 10px 10px;
+  border-top: 1px solid #1a1a28;
+  flex-shrink: 0;
+  background: #0d0d16;
+}
+.pcb-chat-input {
+  flex: 1;
+  background: #13131e;
+  border: 1px solid #252535;
+  border-radius: 8px;
+  color: #d8d8e8;
+  font-size: 12.5px;
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  padding: 7px 10px;
+  resize: none;
+  outline: none;
+  line-height: 1.5;
+  transition: border-color 0.15s;
+}
+.pcb-chat-input:focus { border-color: #3a3a58; }
+.pcb-chat-input::placeholder { color: #33334a; }
+.pcb-send-btn {
+  background: #63ffb4;
+  color: #050810;
+  border: none;
+  border-radius: 8px;
+  padding: 0 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, opacity 0.15s;
+  align-self: flex-end;
+  height: 36px;
+}
+.pcb-send-btn:hover { background: #80ffc8; }
+.pcb-send-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ════════════════════════════════════════════════
+   탭 2: 문서
+   ════════════════════════════════════════════════ */
+#pcb-pane-docs {
+  flex-direction: column;
+  padding: 14px;
+  gap: 10px;
+  overflow-y: auto;
+}
+
+.pcb-docs-intro {
+  font-size: 12px;
+  color: #55556a;
+  line-height: 1.6;
+}
+.pcb-file-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.pcb-file-input-hidden {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.pcb-btn-primary {
+  background: #63ffb4;
+  color: #050810;
+  border: none;
+  border-radius: 7px;
+  padding: 7px 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  cursor: pointer;
+  transition: background 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.pcb-btn-primary:hover { background: #80ffc8; }
+
+.pcb-btn-ghost {
+  background: none;
+  border: 1px solid #252535;
+  border-radius: 7px;
+  color: #555568;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.pcb-btn-ghost:hover { border-color: #44445a; color: #9090a8; }
+
+.pcb-file-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.pcb-file-empty {
+  color: #33334a;
+  font-size: 12px;
+  padding: 6px 0;
+}
+.pcb-file-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #111120;
+  border: 1px solid #1e1e2e;
+  border-radius: 7px;
+  padding: 6px 10px;
+}
+.pcb-file-icon { font-size: 13px; flex-shrink: 0; }
+.pcb-file-name {
+  flex: 1;
+  font-size: 12px;
+  color: #9090b0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pcb-file-remove {
+  background: none;
+  border: none;
+  color: #44445a;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: color 0.15s, background 0.15s;
+  font-family: inherit;
+}
+.pcb-file-remove:hover { color: #ff7070; background: rgba(255,80,80,0.1); }
+
+.pcb-docs-note {
+  font-size: 11px;
+  color: #33334a;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ════════════════════════════════════════════════
+   탭 3: 체크리스트
+   ════════════════════════════════════════════════ */
+#pcb-pane-checklist {
+  flex-direction: column;
+  overflow: hidden;
+}
+.pcb-checklist-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 14px;
+  scrollbar-width: thin;
+  scrollbar-color: #1e1e2e transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pcb-checklist-scroll::-webkit-scrollbar { width: 3px; }
+.pcb-checklist-scroll::-webkit-scrollbar-thumb { background: #1e1e2e; border-radius: 2px; }
+
+.pcb-cl-section { margin-bottom: 8px; }
+.pcb-cl-section-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #63ffb4;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  margin-bottom: 6px;
+  padding-left: 2px;
+}
+.pcb-cl-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.pcb-cl-item:hover { background: rgba(255,255,255,0.03); }
+.pcb-cl-item input[type="checkbox"] {
+  accent-color: #63ffb4;
+  margin-top: 2px;
+  flex-shrink: 0;
+  width: 13px;
+  height: 13px;
+}
+.pcb-cl-item span {
+  font-size: 12px;
+  color: #8888a8;
+  line-height: 1.5;
+}
+.pcb-cl-item:has(input:checked) span {
+  color: #444458;
+  text-decoration: line-through;
+}
+
+.pcb-cl-reset-row {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 8px;
+  border-top: 1px solid #1a1a28;
+  margin-top: 4px;
+}
+.pcb-cl-reset-btn { font-size: 11px; padding: 4px 10px; }
+
+/* ════════════════════════════════════════════════
+   탭 4: 빠른질문
+   ════════════════════════════════════════════════ */
+#pcb-pane-quick {
+  flex-direction: column;
+  overflow: hidden;
+}
+.pcb-quick-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 12px 14px;
+  scrollbar-width: thin;
+  scrollbar-color: #1e1e2e transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.pcb-quick-scroll::-webkit-scrollbar { width: 3px; }
+.pcb-quick-scroll::-webkit-scrollbar-thumb { background: #1e1e2e; border-radius: 2px; }
+
+.pcb-quick-group-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #555570;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 8px 4px 4px;
+  border-top: 1px solid #1a1a28;
+  margin-top: 4px;
+}
+.pcb-quick-group-title:first-child {
+  border-top: none;
+  padding-top: 2px;
+  margin-top: 0;
+}
+
+.pcb-qbtn {
+  width: 100%;
+  text-align: left;
+  background: #0f0f1a;
+  border: 1px solid #1e1e2e;
+  border-radius: 8px;
+  color: #8888a8;
+  font-size: 12px;
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  padding: 8px 12px;
+  cursor: pointer;
+  line-height: 1.4;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.pcb-qbtn:hover {
+  background: #141428;
+  border-color: #33335a;
+  color: #c0c0e0;
+}
+.pcb-qbtn:active { background: #1a1a35; }
+.pcb-qbtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── 최소화 복구 탭 ─────────────────────────────────────────────────────── */
+.pcb-restore-tab {
+  position: fixed;
+  bottom: 24px;
+  right: 18px;
+  background: #0f0f18;
+  border: 1px solid #252535;
+  border-radius: 20px;
+  color: #63ffb4;
+  font-size: 12.5px;
+  font-weight: 700;
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  padding: 8px 16px;
+  cursor: pointer;
+  z-index: 2147483647;
+  display: none;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.pcb-restore-tab:hover {
+  background: #161625;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.6);
+}

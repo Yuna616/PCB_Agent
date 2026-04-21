@@ -152,6 +152,90 @@
         <span id="pcp-project-bar-text" class="pcp-project-bar-text"></span>
       </div>
 
+      <!-- ── 도구 탭 바 ── -->
+      <div id="pcp-tool-tabs">
+        <button class="pcp-tool-tab active" data-tool="coach" title="AI 설계 코칭">💬 코치</button>
+        <button class="pcp-tool-tab" data-tool="erc" title="전기 규칙 검사">⚠️ ERC</button>
+        <button class="pcp-tool-tab" data-tool="parts" title="JLCPCB 부품 검색">🔍 부품</button>
+        <button class="pcp-tool-tab" data-tool="bom" title="JLCPCB BOM 생성">📋 BOM</button>
+      </div>
+
+      <!-- ── ERC 패널 ── -->
+      <div id="pcp-erc-panel" class="pcp-tool-panel" style="display:none">
+        <div class="pcp-tool-header">
+          <span>⚠️ 전기 규칙 검사 (ERC)</span>
+          <span class="pcp-tool-hint">회로 설명을 입력하거나, 생성된 원리도 JSON을 붙여넣으세요</span>
+        </div>
+        <textarea id="pcp-erc-input" class="pcp-tool-textarea" rows="4"
+          placeholder="예: ESP32 + AMS1117-3.3 + USB-C 회로&#10;또는 /generate 결과 JSON을 붙여넣기"></textarea>
+        <div class="pcp-tool-btns">
+          <button type="button" id="pcp-erc-run" class="pcp-tool-primary">⚠️ ERC 실행</button>
+          <button type="button" id="pcp-erc-paste-last" class="pcp-tool-secondary" title="마지막 생성 결과를 자동 입력">마지막 회로 사용</button>
+        </div>
+        <div id="pcp-erc-result" style="display:none">
+          <div id="pcp-erc-summary"></div>
+          <div id="pcp-erc-issues"></div>
+          <div id="pcp-erc-fixes" style="display:none">
+            <button type="button" id="pcp-erc-apply-fixes" class="pcp-tool-fix-btn">🔧 자동 수정 적용</button>
+          </div>
+        </div>
+        <div id="pcp-erc-loading" style="display:none" class="pcp-tool-loading">⏳ ERC 분석 중…</div>
+        <div id="pcp-erc-err" class="pcp-tool-err" style="display:none"></div>
+      </div>
+
+      <!-- ── 부품 검색 패널 ── -->
+      <div id="pcp-parts-panel" class="pcp-tool-panel" style="display:none">
+        <div class="pcp-tool-header">
+          <span>🔍 JLCPCB / LCSC 부품 검색</span>
+          <span class="pcp-tool-hint">자연어로 부품을 설명하면 LCSC 번호 + 가격을 알려드립니다</span>
+        </div>
+        <div class="pcp-parts-search-row">
+          <input type="text" id="pcp-parts-query" class="pcp-tool-input"
+            placeholder="예: 3.3V LDO 500mA SOT-223 / CAN transceiver SOP-8" />
+          <button type="button" id="pcp-parts-search" class="pcp-tool-primary">검색</button>
+        </div>
+        <div class="pcp-parts-filters">
+          <label class="pcp-parts-check">
+            <input type="checkbox" id="pcp-parts-basic-only" />
+            JLCPCB 기본 라이브러리만
+          </label>
+          <input type="text" id="pcp-parts-pkg" class="pcp-tool-input-sm" placeholder="패키지 필터 (선택)" />
+        </div>
+        <div id="pcp-parts-result" style="display:none"></div>
+        <div id="pcp-parts-loading" style="display:none" class="pcp-tool-loading">⏳ 부품 검색 중…</div>
+        <div id="pcp-parts-err" class="pcp-tool-err" style="display:none"></div>
+      </div>
+
+      <!-- ── BOM 패널 ── -->
+      <div id="pcp-bom-panel" class="pcp-tool-panel" style="display:none">
+        <div class="pcp-tool-header">
+          <span>📋 JLCPCB BOM 생성</span>
+          <span class="pcp-tool-hint">회로 컴포넌트 → LCSC 부품번호 + 가격 + CSV</span>
+        </div>
+        <div class="pcp-bom-top">
+          <button type="button" id="pcp-bom-paste-last" class="pcp-tool-secondary">마지막 회로 사용</button>
+          <label class="pcp-bom-qty-label">
+            보드 수량:
+            <input type="number" id="pcp-bom-qty" class="pcp-bom-qty-input" value="5" min="1" max="9999" />
+          </label>
+        </div>
+        <textarea id="pcp-bom-components" class="pcp-tool-textarea" rows="4"
+          placeholder="컴포넌트 JSON 배열 붙여넣기 (또는 '마지막 회로 사용' 클릭)&#10;예: [{ &quot;ref&quot;:&quot;U1&quot;, &quot;value&quot;:&quot;ESP32-WROOM-32&quot;, ... }]"></textarea>
+        <div class="pcp-tool-btns">
+          <button type="button" id="pcp-bom-generate" class="pcp-tool-primary">📋 BOM 생성</button>
+        </div>
+        <div id="pcp-bom-result" style="display:none">
+          <div id="pcp-bom-summary"></div>
+          <div id="pcp-bom-table"></div>
+          <div class="pcp-bom-actions">
+            <button type="button" id="pcp-bom-download-csv" class="pcp-tool-secondary">💾 CSV 다운로드</button>
+            <button type="button" id="pcp-bom-copy-csv" class="pcp-tool-secondary">📋 CSV 복사</button>
+          </div>
+        </div>
+        <div id="pcp-bom-loading" style="display:none" class="pcp-tool-loading">⏳ BOM 생성 중…</div>
+        <div id="pcp-bom-err" class="pcp-tool-err" style="display:none"></div>
+      </div>
+
       <!-- 원리도 자동 생성 결과 영역 -->
       <div id="pcp-gen-zone" style="display:none">
         <div id="pcp-gen-header">
@@ -667,6 +751,379 @@
     }
   });
 
+  // ── 도구 탭 전환 ──────────────────────────────────────────────────────────
+  const toolPanels = {
+    coach:  null,   // 기존 coach 영역 (capture-zone + files-zone + messages + input-zone)
+    erc:    document.getElementById("pcp-erc-panel"),
+    parts:  document.getElementById("pcp-parts-panel"),
+    bom:    document.getElementById("pcp-bom-panel"),
+  };
+  const coachEls = [
+    "pcp-gen-zone", "pcp-capture-zone", "pcp-files-zone",
+    "pcp-messages", "pcp-input-zone", "pcp-status"
+  ];
+
+  function switchToolTab(tabName) {
+    // 탭 버튼 active 표시
+    document.querySelectorAll(".pcp-tool-tab").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.tool === tabName);
+    });
+    // coach 영역 토글
+    const isCoach = tabName === "coach";
+    coachEls.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = isCoach ? "" : "none";
+    });
+    // 도구 패널 토글
+    Object.entries(toolPanels).forEach(([key, el]) => {
+      if (!el) return;
+      el.style.display = (key === tabName) ? "flex" : "none";
+    });
+  }
+
+  document.querySelectorAll(".pcp-tool-tab").forEach(btn => {
+    btn.addEventListener("click", () => switchToolTab(btn.dataset.tool));
+  });
+
+  // ── 마지막 생성된 회로 JSON 저장 ─────────────────────────────────────────
+  let _lastGeneratedCircuit = null;
+
+  // ── ERC 패널 ──────────────────────────────────────────────────────────────
+  document.getElementById("pcp-erc-paste-last").addEventListener("click", () => {
+    if (_lastGeneratedCircuit) {
+      document.getElementById("pcp-erc-input").value =
+        JSON.stringify({ components: _lastGeneratedCircuit.components || [],
+                          connections: _lastGeneratedCircuit.connections || [] }, null, 2);
+    } else {
+      document.getElementById("pcp-erc-err").textContent = "아직 생성된 회로가 없습니다. 먼저 원리도를 생성하세요.";
+      document.getElementById("pcp-erc-err").style.display = "block";
+    }
+  });
+
+  document.getElementById("pcp-erc-run").addEventListener("click", async () => {
+    const input = document.getElementById("pcp-erc-input").value.trim();
+    const errEl = document.getElementById("pcp-erc-err");
+    const loadEl = document.getElementById("pcp-erc-loading");
+    const resultEl = document.getElementById("pcp-erc-result");
+    errEl.style.display = "none";
+    resultEl.style.display = "none";
+
+    if (!apiKey) {
+      errEl.textContent = "API 키가 필요합니다.";
+      errEl.style.display = "block";
+      return;
+    }
+    if (!input) {
+      errEl.textContent = "회로 설명 또는 JSON을 입력하세요.";
+      errEl.style.display = "block";
+      return;
+    }
+
+    // 입력이 JSON인지 텍스트인지 판별
+    let circuitData;
+    try {
+      circuitData = JSON.parse(input);
+    } catch {
+      // 텍스트 설명으로 처리 (circuit_data에 description 필드로 래핑)
+      circuitData = { description: input };
+    }
+
+    loadEl.style.display = "block";
+    document.getElementById("pcp-erc-run").disabled = true;
+
+    try {
+      const resp = await fetch("http://localhost:8000/api/v1/erc", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          circuit_data: circuitData,
+          context: circuitData.description || null,
+          api_key: apiKey,
+        }),
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.detail || `HTTP ${resp.status}`);
+      }
+
+      const data = await resp.json();
+      renderERCResult(data);
+      resultEl.style.display = "block";
+    } catch (e) {
+      errEl.textContent = "❌ ERC 실패: " + e.message;
+      errEl.style.display = "block";
+    } finally {
+      loadEl.style.display = "none";
+      document.getElementById("pcp-erc-run").disabled = false;
+    }
+  });
+
+  function renderERCResult(data) {
+    const summary = data.erc_summary || {};
+    const issues  = data.issues || [];
+    const fixes   = data.fix_actions || [];
+
+    // 요약 배지
+    const pass = summary.pass !== false && summary.errors === 0;
+    const summaryEl = document.getElementById("pcp-erc-summary");
+    summaryEl.innerHTML = `
+      <div class="pcp-erc-summary ${pass ? "pass" : "fail"}">
+        <span class="pcp-erc-badge">${pass ? "✅ PASS" : "❌ FAIL"}</span>
+        <span class="pcp-erc-counts">
+          오류 <strong class="err">${summary.errors || 0}</strong> &nbsp;
+          경고 <strong class="warn">${summary.warnings || 0}</strong> &nbsp;
+          정보 <strong class="info">${summary.info || 0}</strong>
+        </span>
+      </div>`;
+
+    // 이슈 목록
+    const issuesEl = document.getElementById("pcp-erc-issues");
+    if (!issues.length) {
+      issuesEl.innerHTML = '<p class="pcp-erc-none">검출된 문제 없음</p>';
+    } else {
+      issuesEl.innerHTML = issues.map(issue => `
+        <div class="pcp-erc-issue pcp-erc-${issue.severity}">
+          <div class="pcp-erc-issue-top">
+            <span class="pcp-erc-sev">${severityIcon(issue.severity)}</span>
+            <span class="pcp-erc-comp">${issue.component || "—"} ${issue.pin ? `[${issue.pin}]` : ""}</span>
+            <span class="pcp-erc-cat">${issue.category || ""}</span>
+          </div>
+          <p class="pcp-erc-msg">${issue.message}</p>
+          <p class="pcp-erc-fix">💡 ${issue.fix}</p>
+        </div>`).join("");
+    }
+
+    // 자동 수정 버튼
+    const fixesEl = document.getElementById("pcp-erc-fixes");
+    if (fixes.length > 0) {
+      fixesEl.style.display = "block";
+      fixesEl.querySelector("#pcp-erc-apply-fixes").onclick = () => applyERCFixes(fixes);
+    } else {
+      fixesEl.style.display = "none";
+    }
+  }
+
+  function severityIcon(sev) {
+    return { error: "🔴", warning: "🟡", info: "🔵" }[sev] || "⚪";
+  }
+
+  async function applyERCFixes(fixes) {
+    const btn = document.getElementById("pcp-erc-apply-fixes");
+    btn.disabled = true;
+    btn.textContent = "⏳ 수정 적용 중…";
+    try {
+      if (window.PCBCircuitEngine) {
+        const { applied, skipped } = await PCBCircuitEngine.applyFixes(fixes);
+        const msg = `✅ 적용: ${applied.length}개` + (skipped.length ? ` / 건너뜀: ${skipped.length}개` : "");
+        btn.textContent = msg;
+      } else {
+        btn.textContent = "자동 수정 불가 — 수동으로 수정하세요";
+      }
+    } catch (e) {
+      btn.textContent = "수정 실패: " + e.message;
+    }
+  }
+
+  // ── 부품 검색 패널 ────────────────────────────────────────────────────────
+  document.getElementById("pcp-parts-search").addEventListener("click", runPartsSearch);
+  document.getElementById("pcp-parts-query").addEventListener("keydown", e => {
+    if (e.key === "Enter") runPartsSearch();
+  });
+
+  async function runPartsSearch() {
+    const query  = document.getElementById("pcp-parts-query").value.trim();
+    const pkg    = document.getElementById("pcp-parts-pkg").value.trim();
+    const basic  = document.getElementById("pcp-parts-basic-only").checked;
+    const errEl  = document.getElementById("pcp-parts-err");
+    const loadEl = document.getElementById("pcp-parts-loading");
+    const resultEl = document.getElementById("pcp-parts-result");
+    errEl.style.display = "none";
+    resultEl.style.display = "none";
+
+    if (!apiKey) { errEl.textContent = "API 키가 필요합니다."; errEl.style.display = "block"; return; }
+    if (!query)  { errEl.textContent = "검색어를 입력하세요."; errEl.style.display = "block"; return; }
+
+    loadEl.style.display = "block";
+    document.getElementById("pcp-parts-search").disabled = true;
+
+    try {
+      const resp = await fetch("http://localhost:8000/api/v1/parts/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query, package: pkg || null, jlcpcb_basic_only: basic, api_key: apiKey }),
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.detail || `HTTP ${resp.status}`);
+      }
+      const data = await resp.json();
+      renderPartsResult(data);
+      resultEl.style.display = "block";
+    } catch (e) {
+      errEl.textContent = "❌ 검색 실패: " + e.message;
+      errEl.style.display = "block";
+    } finally {
+      loadEl.style.display = "none";
+      document.getElementById("pcp-parts-search").disabled = false;
+    }
+  }
+
+  function renderPartsResult(data) {
+    const resultEl = document.getElementById("pcp-parts-result");
+    const results  = data.results || [];
+    if (!results.length) {
+      resultEl.innerHTML = '<p class="pcp-parts-none">검색 결과 없음</p>';
+      return;
+    }
+    resultEl.innerHTML = `
+      ${data.recommendation ? `<p class="pcp-parts-rec">💡 ${data.recommendation}</p>` : ""}
+      <div class="pcp-parts-list">
+        ${results.map(p => `
+          <div class="pcp-parts-item ${p.jlcpcb_basic ? "basic" : ""}">
+            <div class="pcp-parts-top">
+              <span class="pcp-parts-lcsc">${p.lcsc_number}</span>
+              ${p.jlcpcb_basic ? '<span class="pcp-parts-basic-badge">기본</span>' : ''}
+              <span class="pcp-parts-conf pcp-conf-${p.confidence}">${p.confidence}</span>
+            </div>
+            <div class="pcp-parts-name">${p.manufacturer} ${p.mpn}</div>
+            <div class="pcp-parts-desc">${p.description}</div>
+            <div class="pcp-parts-meta">
+              <span>${p.package}</span>
+              <span>$${p.unit_price_usd?.toFixed(4) ?? "—"} / ${p.min_qty ?? 1}개~</span>
+              <span>${p.in_stock ? "재고 있음" : "재고 확인 필요"}</span>
+            </div>
+            ${p.note ? `<div class="pcp-parts-note">${p.note}</div>` : ""}
+            <button type="button" class="pcp-parts-copy" data-lcsc="${p.lcsc_number}">LCSC 번호 복사</button>
+          </div>`).join("")}
+      </div>`;
+
+    resultEl.querySelectorAll(".pcp-parts-copy").forEach(btn => {
+      btn.addEventListener("click", () => {
+        navigator.clipboard.writeText(btn.dataset.lcsc).then(() => {
+          btn.textContent = "✅ 복사됨";
+          setTimeout(() => { btn.textContent = "LCSC 번호 복사"; }, 1500);
+        });
+      });
+    });
+  }
+
+  // ── BOM 패널 ─────────────────────────────────────────────────────────────
+  document.getElementById("pcp-bom-paste-last").addEventListener("click", () => {
+    if (_lastGeneratedCircuit && _lastGeneratedCircuit.components) {
+      document.getElementById("pcp-bom-components").value =
+        JSON.stringify(_lastGeneratedCircuit.components, null, 2);
+    } else {
+      document.getElementById("pcp-bom-err").textContent = "아직 생성된 회로가 없습니다.";
+      document.getElementById("pcp-bom-err").style.display = "block";
+    }
+  });
+
+  document.getElementById("pcp-bom-generate").addEventListener("click", async () => {
+    const raw    = document.getElementById("pcp-bom-components").value.trim();
+    const qty    = parseInt(document.getElementById("pcp-bom-qty").value) || 5;
+    const errEl  = document.getElementById("pcp-bom-err");
+    const loadEl = document.getElementById("pcp-bom-loading");
+    const resultEl = document.getElementById("pcp-bom-result");
+    errEl.style.display = "none";
+    resultEl.style.display = "none";
+
+    if (!apiKey) { errEl.textContent = "API 키가 필요합니다."; errEl.style.display = "block"; return; }
+    if (!raw)    { errEl.textContent = "컴포넌트 JSON을 입력하세요."; errEl.style.display = "block"; return; }
+
+    let components;
+    try { components = JSON.parse(raw); } catch {
+      errEl.textContent = "JSON 형식이 올바르지 않습니다.";
+      errEl.style.display = "block";
+      return;
+    }
+    if (!Array.isArray(components)) components = [components];
+
+    loadEl.style.display = "block";
+    document.getElementById("pcp-bom-generate").disabled = true;
+
+    try {
+      const resp = await fetch("http://localhost:8000/api/v1/bom/jlcpcb", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ components, board_qty: qty, api_key: apiKey }),
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.detail || `HTTP ${resp.status}`);
+      }
+      const data = await resp.json();
+      _lastBomData = data;
+      renderBOMResult(data);
+      resultEl.style.display = "block";
+    } catch (e) {
+      errEl.textContent = "❌ BOM 생성 실패: " + e.message;
+      errEl.style.display = "block";
+    } finally {
+      loadEl.style.display = "none";
+      document.getElementById("pcp-bom-generate").disabled = false;
+    }
+  });
+
+  let _lastBomData = null;
+
+  function renderBOMResult(data) {
+    const cs = data.cost_summary || {};
+    document.getElementById("pcp-bom-summary").innerHTML = `
+      <div class="pcp-bom-summary">
+        <span>총 ${cs.total_components || data.bom?.length || 0}종</span>
+        <span>보드 ${cs.board_qty || 1}개 기준</span>
+        <span class="pcp-bom-total">예상 부품비: <strong>$${(cs.total_cost_usd || 0).toFixed(2)}</strong></span>
+        <span>기본 ${cs.jlcpcb_basic_count || 0}개 / 확장 ${cs.jlcpcb_extended_count || 0}개</span>
+      </div>
+      ${data.warnings?.length ? `<p class="pcp-bom-warn">⚠️ ${data.warnings.join(" / ")}</p>` : ""}
+      ${data.jlcpcb_notes ? `<p class="pcp-bom-notes">📌 ${data.jlcpcb_notes}</p>` : ""}`;
+
+    const bom = data.bom || [];
+    document.getElementById("pcp-bom-table").innerHTML = `
+      <table class="pcp-bom-tbl">
+        <thead><tr>
+          <th>Ref</th><th>값</th><th>패키지</th>
+          <th>LCSC#</th><th>MPN</th>
+          <th>수량</th><th>단가(USD)</th><th>소계</th>
+          <th>기본</th>
+        </tr></thead>
+        <tbody>
+          ${bom.map(r => `<tr>
+            <td>${r.ref}</td>
+            <td>${r.value}</td>
+            <td>${r.package}</td>
+            <td><code>${r.lcsc_number || "—"}</code></td>
+            <td class="pcp-bom-mpn">${r.mpn || "—"}</td>
+            <td>${r.quantity_total ?? r.quantity}</td>
+            <td>$${(r.unit_price_usd || 0).toFixed(4)}</td>
+            <td>$${(r.total_price_usd || 0).toFixed(4)}</td>
+            <td>${r.jlcpcb_basic ? "✅" : "➕"}</td>
+          </tr>`).join("")}
+        </tbody>
+      </table>`;
+  }
+
+  document.getElementById("pcp-bom-download-csv").addEventListener("click", () => {
+    if (!_lastBomData?.csv) return;
+    const blob = new Blob([_lastBomData.csv], { type: "text/csv;charset=utf-8;" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href     = url;
+    a.download = "jlcpcb_bom.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById("pcp-bom-copy-csv").addEventListener("click", () => {
+    if (!_lastBomData?.csv) return;
+    navigator.clipboard.writeText(_lastBomData.csv).then(() => {
+      const btn = document.getElementById("pcp-bom-copy-csv");
+      btn.textContent = "✅ 복사됨";
+      setTimeout(() => { btn.textContent = "📋 CSV 복사"; }, 1500);
+    });
+  });
+
   /** 확장 API 캡처가 막힐 때(권한/포커스 등): 사용자 제스처로 화면 공유 폴백 */
   async function captureViaDisplayMedia() {
     if (!navigator.mediaDevices?.getDisplayMedia) {
@@ -1148,6 +1605,8 @@
       }
 
       _genResult = await resp.json();
+      // ERC / BOM 탭에서 바로 사용할 수 있도록 저장
+      _lastGeneratedCircuit = _genResult?.schematic_json || _genResult;
 
       // 온보딩 완료 → 메인 워크스페이스 전환
       projectBrief = {

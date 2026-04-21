@@ -98,3 +98,59 @@ class GenerateRequest(BaseModel):
             ]
         }
     }
+
+
+# ─────────────────────────────────────────────
+# ERC 요청
+# ─────────────────────────────────────────────
+
+class ERCRequest(BaseModel):
+    """전기 규칙 검사 요청"""
+    circuit_data: dict = Field(
+        ...,
+        description="회로 데이터 (components + connections). /generate 결과 전체 또는 직접 입력.",
+    )
+    context: Optional[str] = Field(
+        default=None,
+        description="프로젝트 설명 (선택). 회로 목적을 알면 더 정확한 ERC 수행.",
+    )
+    api_key: str = Field(..., description="OpenAI API 키")
+
+
+# ─────────────────────────────────────────────
+# 부품 검색 요청
+# ─────────────────────────────────────────────
+
+class PartsSearchRequest(BaseModel):
+    """JLCPCB/LCSC 부품 검색 요청"""
+    query: str = Field(
+        ...,
+        min_length=2,
+        description="검색어 (예: '3.3V LDO SOT-223', 'CAN transceiver SOP-8', '100nF 0402')",
+    )
+    category: Optional[str] = Field(default=None, description="카테고리 필터 (선택)")
+    package: Optional[str] = Field(default=None, description="패키지 필터 (선택)")
+    jlcpcb_basic_only: bool = Field(
+        default=False,
+        description="JLCPCB 기본 라이브러리 부품만 검색 (추가 수수료 없음)",
+    )
+    api_key: str = Field(..., description="OpenAI API 키")
+
+
+# ─────────────────────────────────────────────
+# BOM 생성 요청
+# ─────────────────────────────────────────────
+
+class BOMRequest(BaseModel):
+    """JLCPCB BOM 생성 요청"""
+    components: List[dict] = Field(
+        ...,
+        description="컴포넌트 목록. /generate 결과의 components 배열 또는 직접 입력.",
+    )
+    board_qty: int = Field(
+        default=5,
+        ge=1,
+        le=10000,
+        description="보드 제작 수량 (총 부품 수량 및 가격 계산에 사용)",
+    )
+    api_key: str = Field(..., description="OpenAI API 키")

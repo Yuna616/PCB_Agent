@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "EasyEDA PCB Coach",
-  "version": "1.2.0",
-  "description": "EasyEDA 원리도(Schematic) 설계를 단계별로 코칭하는 AI 어시스턴트",
+  "name": "PCB 에이전트",
+  "version": "2.0.0",
+  "description": "프로젝트 문서를 업로드하면 AI가 EasyEDA 원리도 작업을 어떻게 진행할지 채팅으로 안내합니다.",
   "permissions": [
     "activeTab",
     "scripting",
@@ -37,7 +37,10 @@
         "https://lceda.cn/*",
         "https://*.lceda.cn/*"
       ],
-      "js": ["content.js"],
+      "js": [
+        "messageBridge.js",
+        "contentScript.js"
+      ],
       "css": ["panel.css"],
       "run_at": "document_idle"
     }

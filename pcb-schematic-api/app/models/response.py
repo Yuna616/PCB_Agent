@@ -179,3 +179,76 @@ class ErrorResponse(BaseModel):
     success: bool = False
     error: str
     detail: Optional[str] = None
+
+
+# ─────────────────────────────────────────────
+# ERC 응답
+# ─────────────────────────────────────────────
+
+class ERCIssue(BaseModel):
+    id: str
+    severity: str          # error / warning / info
+    category: str
+    component: Optional[str] = None
+    pin: Optional[str] = None
+    net: Optional[str] = None
+    message: str
+    fix: str
+    auto_fixable: bool = False
+
+
+class ERCSummary(BaseModel):
+    total: int
+    errors: int
+    warnings: int
+    info: int
+    pass_: bool = Field(alias="pass")
+
+    model_config = {"populate_by_name": True}
+
+
+class ERCResponse(BaseModel):
+    success: bool = True
+    erc_summary: dict
+    issues: List[ERCIssue]
+    fix_actions: List[dict] = Field(default_factory=list)
+
+
+# ─────────────────────────────────────────────
+# 부품 검색 응답
+# ─────────────────────────────────────────────
+
+class PartResult(BaseModel):
+    lcsc_number: str
+    manufacturer: str
+    mpn: str
+    description: str
+    package: str
+    value: str
+    unit_price_usd: float
+    min_qty: int
+    jlcpcb_basic: bool
+    in_stock: bool
+    datasheet_url: Optional[str] = None
+    confidence: str   # high / medium / low
+    note: Optional[str] = None
+
+
+class PartsSearchResponse(BaseModel):
+    success: bool = True
+    query: str
+    results: List[dict]
+    recommendation: Optional[str] = None
+
+
+# ─────────────────────────────────────────────
+# BOM 응답
+# ─────────────────────────────────────────────
+
+class JLCBOMResponse(BaseModel):
+    success: bool = True
+    bom: List[dict]
+    cost_summary: dict
+    warnings: List[str] = Field(default_factory=list)
+    jlcpcb_notes: Optional[str] = None
+    csv: Optional[str] = Field(default=None, description="JLCPCB 업로드용 CSV 문자열")
