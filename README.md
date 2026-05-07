@@ -2,7 +2,7 @@
 
 A Chrome extension that provides real-time AI coaching while you design PCBs in EasyEDA.  
 Guides you through the entire workflow — from schematic design to PCB layout and Gerber export.
-
+<img width="2866" height="1538" alt="Image" src="https://github.com/user-attachments/assets/54f4564b-8290-49b7-9c58-467701556ba0" />
 ---
 
 ## Features
