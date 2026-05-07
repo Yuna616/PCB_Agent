@@ -42,8 +42,9 @@
       <div class="pcb-tabbar" role="tablist">
         <button class="pcb-tab pcb-tab--active" data-tab="chat"      role="tab">💬 AI 코치</button>
         <button class="pcb-tab"                 data-tab="docs"      role="tab">📂 문서</button>
-        <button class="pcb-tab"                 data-tab="checklist" role="tab">✅ 체크리스트</button>
-        <button class="pcb-tab"                 data-tab="quick"     role="tab">⚡ 빠른질문</button>
+        <button class="pcb-tab"                 data-tab="drc"       role="tab">🔍 DRC</button>
+        <button class="pcb-tab"                 data-tab="checklist" role="tab">✅ 체크</button>
+        <button class="pcb-tab"                 data-tab="quick"     role="tab">⚡ 빠른</button>
       </div>
 
       <!-- 상태바 -->
@@ -76,6 +77,24 @@
         </div>
         <ul id="pcb-file-list" class="pcb-file-list"></ul>
         <p class="pcb-docs-note">최대 20개 · 파일당 40,000자까지 전송됩니다.</p>
+      </div>
+
+      <!-- ── 탭: DRC ── -->
+      <div class="pcb-tabpane" id="pcb-pane-drc">
+        <div class="pcb-drc-toolbar">
+          <button type="button" id="pcb-drc-scan" class="pcb-btn-ghost pcb-drc-scan-btn">
+            📡 회로 스캔
+          </button>
+          <button type="button" id="pcb-drc-run" class="pcb-btn-primary pcb-drc-run-btn">
+            🔍 AI ERC 실행
+          </button>
+        </div>
+        <div id="pcb-drc-scan-info" class="pcb-drc-scan-info"></div>
+        <div id="pcb-drc-results" class="pcb-drc-results">
+          <div class="pcb-drc-empty">
+            <span>📡 회로 스캔 후 AI ERC를 실행하거나<br>문서 탭에서 EasyEDA JSON을 업로드하세요.</span>
+          </div>
+        </div>
       </div>
 
       <!-- ── 탭: 체크리스트 ── -->
@@ -161,6 +180,8 @@
   /** @type {{ role: string, content: string }[]} */
   let chatMessages = [];
   let aiBusy = false;
+  /** @type {object|null} — 회로 스캔 결과 */
+  let schematicScanResult = null;
 
   // ── 탭 전환 ─────────────────────────────────────────────────────────────
   root.querySelectorAll(".pcb-tab").forEach((tabEl) => {
@@ -217,7 +238,10 @@
   }
 
   function buildProjectContext() {
-    return { documentAnalysis: documentAnalysisResult };
+    return {
+      documentAnalysis: documentAnalysisResult,
+      schematicScan: schematicScanResult || null,
+    };
   }
 
   async function callAi(op, extra) {
@@ -346,6 +370,123 @@
     } finally {
       setAiBusy(false);
     }
+  }
+
+  // ── DRC 회로 스캔 ────────────────────────────────────────────────────────
+  const drcScanBtn    = root.querySelector("#pcb-drc-scan");
+  const drcRunBtn     = root.querySelector("#pcb-drc-run");
+  const drcScanInfo   = root.querySelector("#pcb-drc-scan-info");
+  const drcResults    = root.querySelector("#pcb-drc-results");
+
+  // easyeda-reader.js(MAIN world)와 postMessage로 통신
+  window.addEventListener("message", function (evt) {
+    if (!evt.data || evt.data.__pcbAgent !== "scan_result") return;
+    schematicScanResult = evt.data.payload;
+    renderScanInfo(schematicScanResult);
+    drcScanBtn.disabled = false;
+    drcScanBtn.textContent = "📡 재스캔";
+  });
+
+  function renderScanInfo(scan) {
+    if (!scan) {
+      drcScanInfo.innerHTML = '<span class="pcb-drc-scan-none">스캔 결과 없음</span>';
+      return;
+    }
+    const detected = scan.detected
+      ? `<span class="pcb-drc-ok">✓ EasyEDA 감지 (${escapeHtml(scan.source)})</span>`
+      : '<span class="pcb-drc-warn">⚠ EasyEDA 편집기를 찾지 못했습니다</span>';
+    const compCount = Array.isArray(scan.components) ? scan.components.length : 0;
+    const netCount  = Array.isArray(scan.nets)       ? scan.nets.length       : 0;
+    const compInfo  = compCount
+      ? `<span class="pcb-drc-badge">부품 ${compCount}개</span>`
+      : '<span class="pcb-drc-badge pcb-drc-badge--dim">부품 정보 없음</span>';
+    const netInfo   = netCount
+      ? `<span class="pcb-drc-badge">넷 ${netCount}개</span>`
+      : '';
+    drcScanInfo.innerHTML = `${detected}${compInfo}${netInfo}`;
+  }
+
+  drcScanBtn.addEventListener("click", () => {
+    drcScanBtn.disabled = true;
+    drcScanBtn.textContent = "스캔 중…";
+    drcScanInfo.innerHTML = '<span class="pcb-drc-scan-none">EasyEDA 상태 읽는 중…</span>';
+    // easyeda-reader.js에 스캔 요청
+    window.postMessage({ __pcbAgent: "scan_request" }, "*");
+    // 타임아웃 처리 (reader가 없는 경우)
+    setTimeout(() => {
+      if (drcScanBtn.disabled) {
+        drcScanBtn.disabled = false;
+        drcScanBtn.textContent = "📡 회로 스캔";
+        if (!schematicScanResult) {
+          drcScanInfo.innerHTML = '<span class="pcb-drc-warn">⚠ 응답 없음 — EasyEDA 편집기 탭에서 실행하세요</span>';
+        }
+      }
+    }, 2000);
+  });
+
+  drcRunBtn.addEventListener("click", async () => {
+    if (aiBusy) return;
+    setAiBusy(true);
+    setStatus("AI ERC 분석 중…");
+    drcResults.innerHTML = '<div class="pcb-drc-loading">AI가 회로를 검사하고 있습니다…</div>';
+    try {
+      const result = await callAi("run_drc", {
+        schematicData: schematicScanResult,
+        projectContext: buildProjectContext(),
+      });
+      renderDrcResults(result);
+      setStatus("ERC 완료");
+    } catch (e) {
+      drcResults.innerHTML = `<div class="pcb-drc-error">오류: ${escapeHtml(String(e.message || e))}</div>`;
+      setStatus(String(e.message || e), true);
+    } finally {
+      setAiBusy(false);
+    }
+  });
+
+  function renderDrcResults(data) {
+    if (!data || !Array.isArray(data.errors)) {
+      drcResults.innerHTML = '<div class="pcb-drc-empty"><span>결과 파싱 실패 — 다시 시도해 주세요.</span></div>';
+      return;
+    }
+
+    const { errors, pass, summary } = data;
+    const errCount  = errors.filter(e => e.severity === "error").length;
+    const warnCount = errors.filter(e => e.severity === "warning").length;
+    const infoCount = errors.filter(e => e.severity === "info").length;
+
+    const summaryClass = pass ? "pcb-erc-summary pass" : "pcb-erc-summary fail";
+    const badge = pass ? "✅" : "❌";
+    const summaryHtml = `
+      <div class="${summaryClass}">
+        <span class="pcp-erc-badge">${badge}</span>
+        <span class="pcp-erc-counts">
+          <strong class="err">${errCount}오류</strong> &nbsp;
+          <strong class="warn">${warnCount}경고</strong> &nbsp;
+          <strong class="info">${infoCount}정보</strong>
+        </span>
+      </div>
+      <div class="pcb-drc-summary-text">${escapeHtml(summary || "")}</div>
+    `;
+
+    const issuesHtml = errors.length === 0
+      ? '<div class="pcp-erc-none">✅ 발견된 문제 없음</div>'
+      : errors.map(issue => {
+          const sevClass = { error: 'pcp-erc-error', warning: 'pcp-erc-warning', info: 'pcp-erc-info' }[issue.severity] || '';
+          const sevIcon  = { error: '🔴', warning: '⚠️', info: 'ℹ️' }[issue.severity] || '•';
+          return `
+            <div class="pcp-erc-issue ${sevClass}">
+              <div class="pcp-erc-issue-top">
+                <span class="pcp-erc-sev">${sevIcon}</span>
+                <span class="pcp-erc-comp">${escapeHtml(issue.component || '')}</span>
+              </div>
+              <div class="pcp-erc-msg">${escapeHtml(issue.message || '')}</div>
+              ${issue.fix ? `<div class="pcp-erc-fix">→ ${escapeHtml(issue.fix)}</div>` : ''}
+            </div>
+          `;
+        }).join('');
+
+    drcResults.innerHTML = summaryHtml + issuesHtml;
   }
 
   // ── 이벤트 바인딩 ────────────────────────────────────────────────────────

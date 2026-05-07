@@ -37,6 +37,19 @@
         "https://lceda.cn/*",
         "https://*.lceda.cn/*"
       ],
+      "js": ["easyeda-reader.js"],
+      "world": "MAIN",
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://easyeda.com/*",
+        "https://*.easyeda.com/*",
+        "https://oshwlab.com/*",
+        "https://*.oshwlab.com/*",
+        "https://lceda.cn/*",
+        "https://*.lceda.cn/*"
+      ],
       "js": [
         "messageBridge.js",
         "contentScript.js"

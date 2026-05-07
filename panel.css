@@ -2491,3 +2491,95 @@
   background: #161625;
   box-shadow: 0 6px 24px rgba(0,0,0,0.6);
 }
+
+/* ════════════════════════════════════════════════
+   탭: DRC / ERC
+   ════════════════════════════════════════════════ */
+#pcb-pane-drc {
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.pcb-drc-toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #1a1a28;
+  flex-shrink: 0;
+}
+
+.pcb-drc-scan-btn { font-size: 12px; padding: 6px 12px; }
+.pcb-drc-run-btn  { font-size: 12px; padding: 6px 14px; flex: 1; text-align: center; }
+
+.pcb-drc-scan-info {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 6px 12px;
+  font-size: 11.5px;
+  background: #090910;
+  border-bottom: 1px solid #14141e;
+  min-height: 32px;
+  flex-shrink: 0;
+}
+
+.pcb-drc-ok   { color: #63ffb4; }
+.pcb-drc-warn { color: #ffcc44; }
+.pcb-drc-scan-none { color: #44445a; }
+
+.pcb-drc-badge {
+  background: #141424;
+  border: 1px solid #252535;
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-size: 11px;
+  color: #9090b8;
+}
+.pcb-drc-badge--dim { color: #44445a; border-color: #1a1a28; }
+
+.pcb-drc-results {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  scrollbar-width: thin;
+  scrollbar-color: #1e1e2e transparent;
+}
+.pcb-drc-results::-webkit-scrollbar { width: 3px; }
+.pcb-drc-results::-webkit-scrollbar-thumb { background: #1e1e2e; border-radius: 2px; }
+
+.pcb-drc-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #33334a;
+  font-size: 12.5px;
+  line-height: 1.7;
+  padding: 20px;
+}
+
+.pcb-drc-loading {
+  color: #63ffb4;
+  font-size: 12px;
+  padding: 16px;
+  text-align: center;
+  animation: pcp-pulse 1.2s infinite;
+}
+
+.pcb-drc-error {
+  color: #ff7070;
+  font-size: 12px;
+  padding: 10px;
+}
+
+.pcb-drc-summary-text {
+  font-size: 12px;
+  color: #9090b0;
+  padding: 4px 0 8px;
+  line-height: 1.5;
+}

@@ -195,6 +195,41 @@ const SYSTEM_CHAT = `당신은 PCB 설계 전문 코치입니다. EasyEDA를 사
 사용자의 질문이 불명확하면 명확히 하기 위한 질문을 먼저 합니다.
 구체적인 값(저항 오옴, 캐패시터 용량, 트레이스 폭 mm)을 항상 함께 제시합니다.`;
 
+/** ERC/DRC 전용 분석 프롬프트 */
+const SYSTEM_DRC = `당신은 PCB ERC(Electrical Rule Check)/DRC(Design Rule Check) 전문가입니다.
+제공된 회로 데이터·부품 목록·설계 설명을 보고 규칙 위반을 찾아냅니다.
+
+출력은 JSON 하나만 (마크다운·코드펜스 없음):
+{
+  "pass": boolean,
+  "summary": string,
+  "errors": [
+    {
+      "id": string,
+      "severity": "error" | "warning" | "info",
+      "component": string,
+      "message": string,
+      "fix": string
+    }
+  ]
+}
+
+반드시 검사할 규칙:
+1. 플로팅 핀 — NC 심볼 없이 연결되지 않은 입력/출력 핀
+2. VCC 핀 디커플링 — IC VCC마다 100nF + 10µF 캐패시터가 없으면 error
+3. GND 연결 — GND 심볼 없이 연결된 접지 핀 없음 error
+4. 역극성 보호 — 전원 입력에 P-MOSFET/쇼트키 다이오드 없으면 warning
+5. ESD 보호 — USB/CAN/외부 IO 커넥터에 TVS 없으면 warning
+6. 풀업/풀다운 — I2C SDA·SCL, RST, BOOT 핀 풀업 없으면 warning
+7. 미연결 넷 — 동일 넷 이름이 실제로 연결되었는지 확인
+8. 전원 레일 심볼 — VCC_3V3, VCC_5V 등 파워 심볼 없으면 info
+9. 리셋 회로 — MCU RST 핀에 RC 리셋 회로·디바운스 없으면 info
+10. 오실레이터/크리스탈 — 크리스탈이 있으면 부하 캐패시터 확인
+
+회로 데이터가 없거나 불완전하면: 업로드된 파일·대화 맥락·부품 이름 등을 기반으로 추론합니다.
+데이터가 전혀 없으면 "데이터 부족으로 정확한 검사 불가"를 summary에 표기하고 빈 errors 반환.
+한국어로 작성합니다.`;
+
 const MAX_REFERENCE_CHARS = 80000;
 
 function truncateReferenceText(text) {
@@ -290,12 +325,50 @@ async function handlePcbAgentMessage(msg) {
     return { reply };
   }
 
+  if (op === "run_drc") {
+    const scan  = msg.schematicData || null;
+    const ctx   = formatProjectContext(msg.projectContext);
+    let userMsg = "ERC 검사를 실행해 주세요.";
+    if (scan && scan.detected) {
+      const compList = Array.isArray(scan.components) && scan.components.length
+        ? scan.components.map(c => `${c.ref || c.id}(${c.name || c.type})`).join(", ")
+        : "없음";
+      const netList = Array.isArray(scan.nets) && scan.nets.length
+        ? scan.nets.map(n => n.name || n.type).filter(Boolean).slice(0, 30).join(", ")
+        : "없음";
+      userMsg = `EasyEDA 회로 스캔 결과:\n소스: ${scan.source}\n부품: ${compList}\n넷/심볼: ${netList}\n\n위 회로를 ERC 검사하세요.`;
+    } else if (ctx) {
+      userMsg = `프로젝트 맥락:\n${ctx}\n\n위 프로젝트를 기반으로 ERC 검사하세요.`;
+    }
+    if (hasReferenceMaterial(ref)) {
+      userMsg = appendReferenceContext(userMsg, ref);
+    }
+    const raw = await openAiJsonOnly(apiKey, SYSTEM_DRC, userMsg);
+    if (!Array.isArray(raw.errors)) raw.errors = [];
+    if (typeof raw.pass !== "boolean") raw.pass = raw.errors.filter(e => e.severity === "error").length === 0;
+    return raw;
+  }
+
   throw new Error(`알 수 없는 작업입니다: ${op}`);
 }
 
 function formatProjectContext(pc) {
-  if (!pc || typeof pc !== "object" || pc.documentAnalysis == null) return "";
-  return `[내부 문서 분석 요약(JSON)]\n${JSON.stringify(pc.documentAnalysis, null, 2)}`;
+  if (!pc || typeof pc !== "object") return "";
+  const parts = [];
+  if (pc.documentAnalysis != null) {
+    parts.push(`[문서 분석 요약]\n${JSON.stringify(pc.documentAnalysis, null, 2)}`);
+  }
+  if (pc.schematicScan && pc.schematicScan.detected) {
+    const s = pc.schematicScan;
+    const comps = Array.isArray(s.components) && s.components.length
+      ? s.components.map(c => `${c.ref || c.id}(${c.name || c.type})`).join(", ")
+      : "없음";
+    const nets = Array.isArray(s.nets) && s.nets.length
+      ? s.nets.map(n => n.name || n.type).filter(Boolean).slice(0, 20).join(", ")
+      : "없음";
+    parts.push(`[EasyEDA 회로 스캔]\n소스: ${s.source}\n부품: ${comps}\n넷/심볼: ${nets}`);
+  }
+  return parts.join("\n\n");
 }
 
 function validateAnalyzeDocsJson(obj) {
