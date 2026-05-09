@@ -1,5 +1,7 @@
 # PCB Agent — EasyEDA Coach Extension
 
+<img width="2866" height="1538" alt="Image" src="https://github.com/user-attachments/assets/54f4564b-8290-49b7-9c58-467701556ba0" />
+
 A Chrome extension that provides real-time AI coaching while you design PCBs in EasyEDA.  
 Detects 10 electrical rule violations automatically as you edit, and guides you through the full workflow — schematic → PCB layout → Gerber export.
 
