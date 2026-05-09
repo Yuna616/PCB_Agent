@@ -42,7 +42,7 @@
       <div class="pcb-tabbar" role="tablist">
         <button class="pcb-tab pcb-tab--active" data-tab="chat"      role="tab">💬 AI 코치</button>
         <button class="pcb-tab"                 data-tab="docs"      role="tab">📂 문서</button>
-        <button class="pcb-tab"                 data-tab="drc"       role="tab">🔍 DRC</button>
+        <button class="pcb-tab"                 data-tab="drc"       role="tab">🔍 DRC<span id="pcb-drc-badge" class="pcb-drc-tab-badge" style="display:none"></span></button>
         <button class="pcb-tab"                 data-tab="checklist" role="tab">✅ 체크</button>
         <button class="pcb-tab"                 data-tab="quick"     role="tab">⚡ 빠른</button>
       </div>
@@ -81,6 +81,10 @@
 
       <!-- ── 탭: DRC ── -->
       <div class="pcb-tabpane" id="pcb-pane-drc">
+        <div id="pcb-drc-live-bar" class="pcb-drc-live-bar" style="display:none">
+          <span id="pcb-drc-live-dot" class="pcb-drc-live-dot"></span>
+          <span id="pcb-drc-live-text" class="pcb-drc-live-text"></span>
+        </div>
         <div class="pcb-drc-toolbar">
           <button type="button" id="pcb-drc-scan" class="pcb-btn-ghost pcb-drc-scan-btn">
             📡 회로 스캔
@@ -92,7 +96,7 @@
         <div id="pcb-drc-scan-info" class="pcb-drc-scan-info"></div>
         <div id="pcb-drc-results" class="pcb-drc-results">
           <div class="pcb-drc-empty">
-            <span>📡 회로 스캔 후 AI ERC를 실행하거나<br>문서 탭에서 EasyEDA JSON을 업로드하세요.</span>
+            <span>📡 EasyEDA에서 회로를 열면 자동 감지됩니다.<br>또는 회로 스캔을 눌러 수동 실행하세요.</span>
           </div>
         </div>
       </div>
@@ -182,6 +186,10 @@
   let aiBusy = false;
   /** @type {object|null} — 회로 스캔 결과 */
   let schematicScanResult = null;
+  /** @type {number|null} — 마지막 ERC 실행 시점의 scan hash */
+  let lastErcHash = null;
+  /** @type {ReturnType<typeof setTimeout>|null} */
+  let autoErcTimer = null;
 
   // ── 탭 전환 ─────────────────────────────────────────────────────────────
   root.querySelectorAll(".pcb-tab").forEach((tabEl) => {
@@ -377,14 +385,80 @@
   const drcRunBtn     = root.querySelector("#pcb-drc-run");
   const drcScanInfo   = root.querySelector("#pcb-drc-scan-info");
   const drcResults    = root.querySelector("#pcb-drc-results");
+  const drcLiveBar    = root.querySelector("#pcb-drc-live-bar");
+  const drcLiveDot    = root.querySelector("#pcb-drc-live-dot");
+  const drcLiveText   = root.querySelector("#pcb-drc-live-text");
+  const drcBadge      = root.querySelector("#pcb-drc-badge");
+
+  function _scanHash(scan) {
+    if (!scan) return '';
+    const c = (scan.components || []).map(x => (x.ref || '') + (x.name || '')).join('|');
+    const n = (scan.nets       || []).map(x => x.name || x.type || '').join('|');
+    return c + '::' + n;
+  }
+
+  function updateDrcBadge(errCount) {
+    if (errCount == null) { drcBadge.style.display = 'none'; return; }
+    drcBadge.textContent = errCount > 0 ? String(errCount) : '✓';
+    drcBadge.className   = 'pcb-drc-tab-badge ' + (errCount > 0 ? 'pcb-drc-tab-badge--err' : 'pcb-drc-tab-badge--ok');
+    drcBadge.style.display = 'inline-block';
+  }
+
+  function showLiveBar(state) {
+    // state: 'watching' | 'changed' | 'running' | null
+    if (!state) { drcLiveBar.style.display = 'none'; return; }
+    drcLiveBar.style.display = 'flex';
+    drcLiveDot.className = 'pcb-drc-live-dot pcb-drc-live-dot--' + state;
+    const msgs = {
+      watching: '실시간 감시 중',
+      changed:  '회로 변경 감지 — ERC 자동 실행 예정',
+      running:  'AI ERC 분석 중…',
+    };
+    drcLiveText.textContent = msgs[state] || '';
+  }
+
+  function scheduleAutoErc(scan) {
+    if (aiBusy) return;
+    const hash = _scanHash(scan);
+    if (hash === lastErcHash) return;   // 이미 이 데이터로 ERC 완료
+    showLiveBar('changed');
+    clearTimeout(autoErcTimer);
+    autoErcTimer = setTimeout(async () => {
+      if (aiBusy) return;
+      showLiveBar('running');
+      setAiBusy(true);
+      try {
+        const result = await callAi("run_drc", {
+          schematicData: schematicScanResult,
+          projectContext: buildProjectContext(),
+        });
+        lastErcHash = _scanHash(schematicScanResult);
+        renderDrcResults(result);
+        const errCount = Array.isArray(result && result.errors)
+          ? result.errors.filter(e => e.severity === "error").length : 0;
+        updateDrcBadge(errCount);
+        showLiveBar('watching');
+      } catch (_) {
+        showLiveBar('watching');
+      } finally {
+        setAiBusy(false);
+      }
+    }, 8000);  // 8초 debounce — API 비용 절감
+  }
 
   // easyeda-reader.js(MAIN world)와 postMessage로 통신
   window.addEventListener("message", function (evt) {
     if (!evt.data || evt.data.__pcbAgent !== "scan_result") return;
+    const isAuto = !!evt.data.autoScan;
     schematicScanResult = evt.data.payload;
     renderScanInfo(schematicScanResult);
     drcScanBtn.disabled = false;
     drcScanBtn.textContent = "📡 재스캔";
+
+    if (schematicScanResult && schematicScanResult.detected) {
+      showLiveBar('watching');
+      if (isAuto) scheduleAutoErc(schematicScanResult);
+    }
   });
 
   function renderScanInfo(scan) {
@@ -426,7 +500,9 @@
 
   drcRunBtn.addEventListener("click", async () => {
     if (aiBusy) return;
+    clearTimeout(autoErcTimer);
     setAiBusy(true);
+    showLiveBar('running');
     setStatus("AI ERC 분석 중…");
     drcResults.innerHTML = '<div class="pcb-drc-loading">AI가 회로를 검사하고 있습니다…</div>';
     try {
@@ -434,11 +510,17 @@
         schematicData: schematicScanResult,
         projectContext: buildProjectContext(),
       });
+      lastErcHash = _scanHash(schematicScanResult);
       renderDrcResults(result);
+      const errCount = Array.isArray(result && result.errors)
+        ? result.errors.filter(e => e.severity === "error").length : 0;
+      updateDrcBadge(errCount);
+      showLiveBar(schematicScanResult && schematicScanResult.detected ? 'watching' : null);
       setStatus("ERC 완료");
     } catch (e) {
       drcResults.innerHTML = `<div class="pcb-drc-error">오류: ${escapeHtml(String(e.message || e))}</div>`;
       setStatus(String(e.message || e), true);
+      showLiveBar(schematicScanResult && schematicScanResult.detected ? 'watching' : null);
     } finally {
       setAiBusy(false);
     }

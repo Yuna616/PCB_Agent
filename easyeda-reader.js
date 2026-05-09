@@ -119,7 +119,7 @@
     return result;
   }
 
-  // Listen for scan requests from the content script (isolated world)
+  // Listen for manual scan requests from the content script (isolated world)
   window.addEventListener('message', function (evt) {
     if (
       !evt.data ||
@@ -127,6 +127,52 @@
       evt.source !== window
     ) return;
     const payload = snapshotSchematic();
-    window.postMessage({ __pcbAgent: 'scan_result', payload }, '*');
+    window.postMessage({ __pcbAgent: 'scan_result', payload, autoScan: false }, '*');
   });
+
+  // ── Real-time auto-scan via MutationObserver ──────────────────────────────
+  let _autoScanTimer = null;
+  let _lastScanHash  = '';
+
+  function _hashScan(result) {
+    const c = (result.components || []).map(x => (x.ref || '') + (x.name || '')).join('|');
+    const n = (result.nets       || []).map(x => x.name  || x.type || '').join('|');
+    return c + '::' + n;
+  }
+
+  function _scheduleAutoScan() {
+    clearTimeout(_autoScanTimer);
+    _autoScanTimer = setTimeout(function () {
+      const payload = snapshotSchematic();
+      if (!payload.detected) return;
+      const hash = _hashScan(payload);
+      if (hash === _lastScanHash) return;   // 변화 없으면 무시
+      _lastScanHash = hash;
+      window.postMessage({ __pcbAgent: 'scan_result', payload, autoScan: true }, '*');
+    }, 1500);
+  }
+
+  function _startObserver() {
+    // EasyEDA 캔버스 요소 우선, 없으면 document.body 감시
+    const target = (
+      document.querySelector('#svgEditor')         ||
+      document.querySelector('.eda-canvas')        ||
+      document.querySelector('[class*="schematic"]') ||
+      document.querySelector('canvas')             ||
+      document.body
+    );
+    const observer = new MutationObserver(_scheduleAutoScan);
+    observer.observe(target, {
+      subtree:        true,
+      childList:      true,
+      attributes:     true,
+      attributeFilter: ['transform', 'class', 'd'],
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _startObserver);
+  } else {
+    _startObserver();
+  }
 })();
