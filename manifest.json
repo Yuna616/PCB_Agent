@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "PCB 에이전트",
-  "version": "2.0.0",
+  "version": "2.0.2",
   "description": "프로젝트 문서를 업로드하면 AI가 EasyEDA 원리도 작업을 어떻게 진행할지 채팅으로 안내합니다.",
   "permissions": [
     "activeTab",
@@ -39,7 +39,8 @@
       ],
       "js": ["easyeda-reader.js"],
       "world": "MAIN",
-      "run_at": "document_idle"
+      "run_at": "document_idle",
+      "all_frames": true
     },
     {
       "matches": [
@@ -59,7 +60,8 @@
     }
   ],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "type": "module"
   },
   "icons": {
     "16": "icons/icon16.png",

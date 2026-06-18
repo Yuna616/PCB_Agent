@@ -5,6 +5,9 @@
 (function () {
   "use strict";
 
+  // 편집기가 iframe 안에 있을 때 상위 프레임에만 패널을 붙임 (중복 UI 방지)
+  if (window !== window.top) return;
+
   if (document.getElementById("pcb-agent-root")) return;
 
   const BRIDGE = window.PCBAgentBridge;
@@ -45,6 +48,7 @@
         <button class="pcb-tab"                 data-tab="drc"       role="tab">🔍 DRC<span id="pcb-drc-badge" class="pcb-drc-tab-badge" style="display:none"></span></button>
         <button class="pcb-tab"                 data-tab="checklist" role="tab">✅ 체크</button>
         <button class="pcb-tab"                 data-tab="quick"     role="tab">⚡ 빠른</button>
+        <button class="pcb-tab"                 data-tab="agents"    role="tab">🤖 Agents</button>
       </div>
 
       <!-- 상태바 -->
@@ -91,6 +95,9 @@
           </button>
           <button type="button" id="pcb-drc-run" class="pcb-btn-primary pcb-drc-run-btn">
             🔍 AI ERC 실행
+          </button>
+          <button type="button" id="pcb-agent-run" class="pcb-btn-agent pcb-agent-run-btn" title="에이전트가 자율적으로 회로를 분석하고 수정 방법을 제안합니다">
+            🤖 에이전트
           </button>
         </div>
         <div id="pcb-drc-scan-info" class="pcb-drc-scan-info"></div>
@@ -155,6 +162,27 @@
           <button class="pcb-qbtn" data-q="Gerber 파일 생성 전 최종 체크리스트와 EasyEDA에서 생성하는 방법을 단계별로 알려줘.">Gerber 파일 생성 가이드</button>
           <button class="pcb-qbtn" data-q="EasyEDA에서 BOM(Bill of Materials)을 내보내는 방법과 JLCPCB에 발주하는 절차를 알려줘.">BOM 내보내기 / JLCPCB 발주</button>
         </div>
+      </div>
+
+      <!-- ── Tab: Multi-Agent System ── -->
+      <div class="pcb-tabpane" id="pcb-pane-agents">
+
+        <!-- Goal input -->
+        <div class="pcb-ma-goal-section">
+          <textarea id="pcb-ma-goal" class="pcb-ma-goal-input" rows="2"
+            placeholder="Describe your goal — e.g. 'Analyze circuit and recommend components' or 'Run full ERC'"></textarea>
+          <button type="button" id="pcb-ma-run" class="pcb-btn-primary pcb-ma-run-btn">▶ Run</button>
+        </div>
+
+        <!-- Agent pipeline status -->
+        <div id="pcb-ma-pipeline" class="pcb-ma-pipeline" style="display:none">
+          <div id="pcb-ma-plan-row" class="pcb-ma-plan-row"></div>
+          <div id="pcb-ma-agent-rows" class="pcb-ma-agent-rows"></div>
+        </div>
+
+        <!-- Per-agent result cards -->
+        <div id="pcb-ma-results" class="pcb-ma-results"></div>
+
       </div>
 
     </div>
@@ -243,6 +271,10 @@
     chatInput.disabled = aiBusy;
     chatSend.textContent = aiBusy ? "…" : "전송";
     root.querySelectorAll(".pcb-qbtn").forEach(b => b.disabled = aiBusy);
+    if (agentRunBtn) {
+      agentRunBtn.disabled = aiBusy;
+      agentRunBtn.textContent = aiBusy ? "⏳ 분석 중…" : "🤖 에이전트";
+    }
   }
 
   function buildProjectContext() {
@@ -383,6 +415,7 @@
   // ── DRC 회로 스캔 ────────────────────────────────────────────────────────
   const drcScanBtn    = root.querySelector("#pcb-drc-scan");
   const drcRunBtn     = root.querySelector("#pcb-drc-run");
+  const agentRunBtn   = root.querySelector("#pcb-agent-run");
   const drcScanInfo   = root.querySelector("#pcb-drc-scan-info");
   const drcResults    = root.querySelector("#pcb-drc-results");
   const drcLiveBar    = root.querySelector("#pcb-drc-live-bar");
@@ -395,6 +428,27 @@
     const c = (scan.components || []).map(x => (x.ref || '') + (x.name || '')).join('|');
     const n = (scan.nets       || []).map(x => x.name || x.type || '').join('|');
     return c + '::' + n;
+  }
+
+  /** iframe·상위 프레임이 각각 스캔 결과를 보낼 때 가장 유의미한 결과만 채택 */
+  function _scanResultScore(scan) {
+    if (!scan) return -1;
+    let s = 0;
+    if (scan.detected) s += 500;
+    s += Math.min(400, ((scan.components && scan.components.length) || 0) * 2);
+    s += Math.min(200, (scan.nets && scan.nets.length) || 0);
+    return s;
+  }
+
+  function broadcastScanRequest() {
+    window.postMessage({ __pcbAgent: "scan_request" }, "*");
+    try {
+      document.querySelectorAll("iframe").forEach((frame) => {
+        try {
+          if (frame.contentWindow) frame.contentWindow.postMessage({ __pcbAgent: "scan_request" }, "*");
+        } catch (_) {}
+      });
+    } catch (_) {}
   }
 
   function updateDrcBadge(errCount) {
@@ -450,7 +504,9 @@
   window.addEventListener("message", function (evt) {
     if (!evt.data || evt.data.__pcbAgent !== "scan_result") return;
     const isAuto = !!evt.data.autoScan;
-    schematicScanResult = evt.data.payload;
+    const incoming = evt.data.payload;
+    if (_scanResultScore(incoming) < _scanResultScore(schematicScanResult)) return;
+    schematicScanResult = incoming;
     renderScanInfo(schematicScanResult);
     drcScanBtn.disabled = false;
     drcScanBtn.textContent = "📡 재스캔";
@@ -480,12 +536,14 @@
     drcScanInfo.innerHTML = `${detected}${compInfo}${netInfo}`;
   }
 
+  agentRunBtn.addEventListener("click", () => { onAgentRun(); });
+
   drcScanBtn.addEventListener("click", () => {
     drcScanBtn.disabled = true;
     drcScanBtn.textContent = "스캔 중…";
     drcScanInfo.innerHTML = '<span class="pcb-drc-scan-none">EasyEDA 상태 읽는 중…</span>';
-    // easyeda-reader.js에 스캔 요청
-    window.postMessage({ __pcbAgent: "scan_request" }, "*");
+    // easyeda-reader.js에 스캔 요청 (편집기가 iframe 안이면 동일 출처 iframe까지 전달)
+    broadcastScanRequest();
     // 타임아웃 처리 (reader가 없는 경우)
     setTimeout(() => {
       if (drcScanBtn.disabled) {
@@ -570,6 +628,439 @@
 
     drcResults.innerHTML = summaryHtml + issuesHtml;
   }
+
+  // ── 에이전트 자율 분석 ───────────────────────────────────────────────────
+
+  /** 에이전트 섹션 구분 헤더를 채팅 로그에 추가 */
+  function appendAgentHeader(text) {
+    const el = document.createElement("div");
+    el.className = "pcb-agent-header-row";
+    el.textContent = text;
+    chatLog.appendChild(el);
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+
+  /** 에이전트 단계별 스텝을 채팅 로그에 순차 렌더링 */
+  async function renderAgentSteps(steps) {
+    for (const step of steps) {
+      await new Promise(r => setTimeout(r, 100));
+
+      if (step.type === "thought") {
+        const el = document.createElement("div");
+        el.className = "pcb-bubble pcb-bubble--assistant pcb-agent-thought";
+        el.innerHTML = renderMarkdown(step.text);
+        chatLog.appendChild(el);
+
+      } else if (step.type === "tool_call") {
+        const el = document.createElement("div");
+        el.className = "pcb-agent-tool-call";
+        const labels = {
+          run_erc:            "🔍 ERC 검사 실행 중…",
+          analyze_component:  `🔬 부품 분석: ${step.args.component_ref || ""}${step.args.component_name ? " (" + step.args.component_name + ")" : ""}`,
+          propose_fix:        "💡 수정 제안 작성 중…",
+        };
+        el.textContent = labels[step.tool] || `🔧 ${step.tool}`;
+        chatLog.appendChild(el);
+
+      } else if (step.type === "tool_result") {
+        if (step.tool === "run_erc" && step.result && !step.result.error) {
+          const errCount  = Array.isArray(step.result.errors) ? step.result.errors.filter(e => e.severity === "error").length   : 0;
+          const warnCount = Array.isArray(step.result.errors) ? step.result.errors.filter(e => e.severity === "warning").length : 0;
+          const infoCount = Array.isArray(step.result.errors) ? step.result.errors.filter(e => e.severity === "info").length    : 0;
+          const el = document.createElement("div");
+          el.className = "pcb-agent-tool-result";
+          el.innerHTML =
+            `✓ ERC 완료 &nbsp;` +
+            `<span class="pcb-agent-cnt pcb-agent-cnt--err">${errCount}오류</span> ` +
+            `<span class="pcb-agent-cnt pcb-agent-cnt--warn">${warnCount}경고</span> ` +
+            `<span class="pcb-agent-cnt pcb-agent-cnt--info">${infoCount}정보</span>`;
+          chatLog.appendChild(el);
+        } else if (step.tool === "analyze_component") {
+          const el = document.createElement("div");
+          el.className = "pcb-agent-tool-result";
+          el.textContent = `✓ 부품 분석 완료: ${step.result.ref || ""}`;
+          chatLog.appendChild(el);
+        }
+        // propose_fix 결과는 최종 fix 카드로 한꺼번에 표시
+      }
+
+      chatLog.scrollTop = chatLog.scrollHeight;
+    }
+  }
+
+  /** 수정 제안 카드 목록 렌더링 */
+  function renderFixCards(fixes) {
+    if (!fixes || !fixes.length) return;
+
+    const container = document.createElement("div");
+    container.className = "pcb-fix-cards";
+
+    const title = document.createElement("div");
+    title.className = "pcb-fix-cards-title";
+    title.textContent = `📋 수정 제안 ${fixes.length}개`;
+    container.appendChild(title);
+
+    fixes.forEach(fix => {
+      const card = document.createElement("div");
+      card.className = `pcb-fix-card pcb-fix-card--${fix.priority}`;
+
+      const icon = { error: "🔴", warning: "⚠️", suggestion: "💡" }[fix.priority] || "•";
+      const typeLabel = {
+        add_component:  "부품 추가",
+        add_connection: "연결 추가",
+        change_value:   "값 변경",
+        add_protection: "보호 회로 추가",
+      }[fix.fix_type] || fix.fix_type;
+
+      const detailParts = [];
+      if (fix.component_type)  detailParts.push(escapeHtml(fix.component_type));
+      if (fix.component_value) detailParts.push(`(${escapeHtml(fix.component_value)})`);
+      if (fix.connect_to)      detailParts.push(`→ ${escapeHtml(fix.connect_to)}`);
+
+      card.innerHTML =
+        `<div class="pcb-fix-card-top">` +
+          `<span class="pcb-fix-icon">${icon}</span>` +
+          `<span class="pcb-fix-type">${typeLabel}</span>` +
+          (fix.ref_designator ? `<span class="pcb-fix-ref">${escapeHtml(fix.ref_designator)}</span>` : "") +
+        `</div>` +
+        `<div class="pcb-fix-reason">${escapeHtml(fix.reason)}</div>` +
+        (detailParts.length ? `<div class="pcb-fix-detail">${detailParts.join(" ")}</div>` : "");
+
+      container.appendChild(card);
+    });
+
+    chatLog.appendChild(container);
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+
+  /** DRC tab agent button — quick ERC-focused run, shows results in chat tab */
+  async function onAgentRun() {
+    if (aiBusy) return;
+    setAiBusy(true);
+    switchToChat();
+
+    const empty = chatLog.querySelector(".pcb-chat-empty");
+    if (empty) empty.remove();
+
+    appendAgentHeader("🤖 Agent — ERC Analysis");
+    setStatus("Agent running…");
+
+    try {
+      const result = await callAi("multi_agent", {
+        goal: "Run ERC on the current circuit and propose fixes for all issues found.",
+        schematicData: schematicScanResult,
+        projectContext: buildProjectContext(),
+      });
+
+      if (result && result.steps) await animateStepsInChat(result.steps);
+
+      const ercData = result?.results?.erc?.data;
+      if (ercData) renderErcInChat(ercData);
+
+      setStatus("Agent complete");
+    } catch (e) {
+      appendChatBubble("assistant", `Agent error: ${String(e.message || e)}`);
+      setStatus(String(e.message || e), true);
+    } finally {
+      setAiBusy(false);
+    }
+  }
+
+  /** Animate orchestrator step events into the chat log */
+  async function animateStepsInChat(steps) {
+    for (const step of steps) {
+      await new Promise(r => setTimeout(r, 80));
+      if (step.type === "thought") {
+        appendChatBubble("assistant", step.text);
+      } else if (step.type === "tool_call") {
+        const el = document.createElement("div");
+        el.className = "pcb-agent-tool-call";
+        el.textContent = { run_erc: "🔍 Running ERC…", analyze_component: `🔬 Analyzing ${step.args?.component_ref || ""}`, propose_fix: "💡 Proposing fix…" }[step.tool] || `🔧 ${step.tool}`;
+        chatLog.appendChild(el);
+      } else if (step.type === "tool_result" && step.tool === "run_erc" && step.result && !step.result.error) {
+        const errN  = (step.result.errors || []).filter(e => e.severity === "error").length;
+        const warnN = (step.result.errors || []).filter(e => e.severity === "warning").length;
+        const el = document.createElement("div");
+        el.className = "pcb-agent-tool-result";
+        el.innerHTML = `✓ ERC done &nbsp;<span class="pcb-agent-cnt pcb-agent-cnt--err">${errN} errors</span> <span class="pcb-agent-cnt pcb-agent-cnt--warn">${warnN} warnings</span>`;
+        chatLog.appendChild(el);
+      }
+      chatLog.scrollTop = chatLog.scrollHeight;
+    }
+  }
+
+  /** Render ERC result data into the chat tab (reuses DRC renderer) */
+  function renderErcInChat(ercData) {
+    if (!ercData) return;
+    const wrap = document.createElement("div");
+    wrap.className = "pcb-bubble pcb-bubble--assistant";
+    wrap.style.padding = "0";
+    wrap.style.background = "none";
+    wrap.style.border = "none";
+    const tmp = document.createElement("div");
+    tmp.style.width = "100%";
+    renderDrcResults(ercData);   // uses existing renderer that targets #pcb-drc-results
+    chatLog.appendChild(wrap);
+  }
+
+  // ── Multi-Agent tab logic ────────────────────────────────────────────────────
+
+  const maGoalInput  = root.querySelector("#pcb-ma-goal");
+  const maRunBtn     = root.querySelector("#pcb-ma-run");
+  const maPipeline   = root.querySelector("#pcb-ma-pipeline");
+  const maPlanRow    = root.querySelector("#pcb-ma-plan-row");
+  const maAgentRows  = root.querySelector("#pcb-ma-agent-rows");
+  const maResults    = root.querySelector("#pcb-ma-results");
+
+  /** Run multi-agent pipeline and render results in the Agents tab */
+  async function onMultiAgentRun() {
+    if (aiBusy) return;
+    const goal = (maGoalInput.value || "").trim() ||
+      "Analyze the current circuit design and provide comprehensive guidance.";
+
+    setAiBusy(true);
+    maGoalInput.disabled = true;
+
+    // Reset UI
+    maPipeline.style.display = "block";
+    maPlanRow.innerHTML  = `<span class="pcb-ma-planning">🤔 Planning which agents to run…</span>`;
+    maAgentRows.innerHTML = "";
+    maResults.innerHTML   = "";
+
+    try {
+      const result = await callAi("multi_agent", {
+        goal,
+        schematicData:  schematicScanResult,
+        projectContext: buildProjectContext(),
+      });
+
+      replayPipelineEvents(result.steps || [], result.results || {});
+    } catch (e) {
+      maPlanRow.innerHTML = `<span class="pcb-ma-error">✗ ${escapeHtml(String(e.message || e))}</span>`;
+    } finally {
+      setAiBusy(false);
+      maGoalInput.disabled = false;
+    }
+  }
+
+  /** Replay orchestrator steps to build the pipeline UI, then render result cards */
+  function replayPipelineEvents(steps, results) {
+    const agentEls = {};
+
+    for (const step of steps) {
+      if (step.type === "planning") {
+        maPlanRow.innerHTML = `<span class="pcb-ma-planning">🤔 Planning…</span>`;
+
+      } else if (step.type === "plan_ready") {
+        const agentIds = step.plan?.agents || [];
+        maPlanRow.innerHTML =
+          `<span class="pcb-ma-plan-label">Plan:</span> ` +
+          agentIds.map(id => `<span class="pcb-ma-plan-chip">${AGENT_META[id]?.icon || "🔧"} ${AGENT_META[id]?.label || id}</span>`).join(" → ");
+
+      } else if (step.type === "agent_start") {
+        const el = document.createElement("div");
+        el.className = "pcb-ma-agent-row pcb-ma-agent-row--running";
+        el.id = `pcb-ma-row-${step.agentId}`;
+        el.innerHTML =
+          `<span class="pcb-ma-agent-icon">${step.icon || "🔧"}</span>` +
+          `<span class="pcb-ma-agent-label">${escapeHtml(step.label)}</span>` +
+          `<span class="pcb-ma-agent-status pcb-ma-agent-status--running">running…</span>`;
+        maAgentRows.appendChild(el);
+        agentEls[step.agentId] = el;
+
+      } else if (step.type === "agent_done") {
+        const el = agentEls[step.agentId];
+        if (el) {
+          el.className = "pcb-ma-agent-row pcb-ma-agent-row--done";
+          el.querySelector(".pcb-ma-agent-status").textContent = "✓ done";
+          el.querySelector(".pcb-ma-agent-status").className = "pcb-ma-agent-status pcb-ma-agent-status--done";
+        }
+
+      } else if (step.type === "agent_error") {
+        const el = agentEls[step.agentId];
+        if (el) {
+          el.className = "pcb-ma-agent-row pcb-ma-agent-row--error";
+          el.querySelector(".pcb-ma-agent-status").textContent = `✗ ${step.error}`;
+          el.querySelector(".pcb-ma-agent-status").className = "pcb-ma-agent-status pcb-ma-agent-status--error";
+        }
+      }
+    }
+
+    // Render result cards for each completed agent
+    for (const [agentId, agentResult] of Object.entries(results)) {
+      if (agentResult.error) continue;
+      renderResultCard(agentId, agentResult);
+    }
+  }
+
+  /** Display metadata for each known agent */
+  const AGENT_META = {
+    requirements: { icon: "📋", label: "Requirements" },
+    component:    { icon: "🔌", label: "Components" },
+    erc:          { icon: "🔍", label: "ERC Check" },
+    layout:       { icon: "🏗️", label: "PCB Layout" },
+  };
+
+  /** Render a collapsible result card for one agent */
+  function renderResultCard(agentId, agentResult) {
+    const meta = AGENT_META[agentId] || { icon: "🔧", label: agentId };
+    const data = agentResult.data;
+    if (!data) return;
+
+    const card = document.createElement("details");
+    card.className = `pcb-ma-card pcb-ma-card--${agentId}`;
+    card.open = true;
+
+    card.innerHTML =
+      `<summary class="pcb-ma-card-summary">` +
+        `<span>${meta.icon} ${meta.label}</span>` +
+        `<span class="pcb-ma-card-chevron">▾</span>` +
+      `</summary>` +
+      `<div class="pcb-ma-card-body" id="pcb-ma-body-${agentId}"></div>`;
+
+    maResults.appendChild(card);
+    const body = card.querySelector(`#pcb-ma-body-${agentId}`);
+
+    if (agentId === "requirements") renderRequirementsCard(body, data);
+    else if (agentId === "component")  renderComponentCard(body, data);
+    else if (agentId === "erc")        renderErcCard(body, data);
+    else if (agentId === "layout")     renderLayoutCard(body, data);
+    else body.innerHTML = `<pre class="pcb-ma-pre">${escapeHtml(JSON.stringify(data, null, 2))}</pre>`;
+  }
+
+  function renderRequirementsCard(body, d) {
+    const rows = [
+      d.project_summary && `<p class="pcb-ma-summary">${escapeHtml(d.project_summary)}</p>`,
+      d.power?.input_voltage && rField("Input Voltage", d.power.input_voltage),
+      d.power?.rails?.length  && rSection("Power Rails", d.power.rails.map(r =>
+        `<div class="pcb-ma-row-item"><code>${escapeHtml(r.name)}</code> ${escapeHtml(r.voltage)} / ${escapeHtml(String(r.max_current_ma || ""))} mA</div>`
+      ).join("")),
+      d.interfaces?.length    && rSection("Interfaces", d.interfaces.map(i =>
+        `<div class="pcb-ma-row-item">• <strong>${escapeHtml(i.type)}</strong> — ${escapeHtml(i.description)}</div>`
+      ).join("")),
+      d.key_ics?.length       && rSection("Key ICs", d.key_ics.map(ic =>
+        `<div class="pcb-ma-row-item">• <code>${escapeHtml(ic.suggested_part)}</code> — ${escapeHtml(ic.role)}</div>`
+      ).join("")),
+      d.constraints?.length   && rSection("Constraints", rBullets(d.constraints)),
+      d.open_questions?.length && rSection("Open Questions", rBullets(d.open_questions)),
+      d.complexity && rField("Complexity", d.complexity),
+    ].filter(Boolean).join("");
+    body.innerHTML = rows || `<p class="pcb-ma-empty">No requirements extracted.</p>`;
+  }
+
+  function renderComponentCard(body, d) {
+    const rows = [
+      d.mcu && rSection("MCU",
+        `<div class="pcb-ma-comp-row">` +
+          `<code class="pcb-ma-lcsc">${escapeHtml(d.mcu.lcsc || "")}</code> ` +
+          `<strong>${escapeHtml(d.mcu.part || "")}</strong> ${escapeHtml(d.mcu.package || "")}` +
+          (d.mcu.jlcpcb_basic ? ` <span class="pcb-ma-basic-badge">JLCPCB Basic</span>` : "") +
+          `<div class="pcb-ma-comp-reason">${escapeHtml(d.mcu.reason || "")}</div>` +
+        `</div>`
+      ),
+      d.power_ics?.length && rSection("Power ICs", d.power_ics.map(ic =>
+        `<div class="pcb-ma-comp-row">` +
+          `<code class="pcb-ma-lcsc">${escapeHtml(ic.lcsc || "")}</code> ` +
+          `<strong>${escapeHtml(ic.part || "")}</strong> ${escapeHtml(ic.package || "")} — ${escapeHtml(ic.role || "")}` +
+          (ic.jlcpcb_basic ? ` <span class="pcb-ma-basic-badge">Basic</span>` : "") +
+          `<div class="pcb-ma-comp-reason">${escapeHtml(ic.vin || "")} → ${escapeHtml(ic.vout || "")} @ ${escapeHtml(ic.max_current || "")}</div>` +
+        `</div>`
+      ).join("")),
+      d.protection?.length && rSection("Protection", d.protection.map(p =>
+        `<div class="pcb-ma-comp-row">` +
+          `<code class="pcb-ma-lcsc">${escapeHtml(p.lcsc || "")}</code> ` +
+          `<strong>${escapeHtml(p.part || "")}</strong> — ${escapeHtml(p.type || "")} (${escapeHtml(p.where || "")})` +
+        `</div>`
+      ).join("")),
+      d.decoupling_rules?.length && rSection("Decoupling Rules", rBullets(d.decoupling_rules)),
+      d.estimated_cost_usd && rField("Estimated BOM Cost", `$${escapeHtml(String(d.estimated_cost_usd))}`),
+      d.bom_notes && `<p class="pcb-ma-note">${escapeHtml(d.bom_notes)}</p>`,
+    ].filter(Boolean).join("");
+    body.innerHTML = rows || `<p class="pcb-ma-empty">No component data.</p>`;
+  }
+
+  function renderErcCard(body, d) {
+    if (!d || !Array.isArray(d.errors)) {
+      body.innerHTML = `<p class="pcb-ma-empty">No ERC data.</p>`;
+      return;
+    }
+    const errN  = d.errors.filter(e => e.severity === "error").length;
+    const warnN = d.errors.filter(e => e.severity === "warning").length;
+    const infoN = d.errors.filter(e => e.severity === "info").length;
+    const summaryClass = d.pass ? "pcb-erc-summary pass" : "pcb-erc-summary fail";
+
+    body.innerHTML =
+      `<div class="${summaryClass}">` +
+        `<span>${d.pass ? "✅" : "❌"}</span>` +
+        `<span class="pcp-erc-counts">` +
+          `<strong class="err">${errN} errors</strong> &nbsp;` +
+          `<strong class="warn">${warnN} warnings</strong> &nbsp;` +
+          `<strong class="info">${infoN} info</strong>` +
+        `</span>` +
+      `</div>` +
+      `<div class="pcb-drc-summary-text">${escapeHtml(d.summary || "")}</div>` +
+      d.errors.map(issue => {
+        const sevClass = { error: "pcp-erc-error", warning: "pcp-erc-warning", info: "pcp-erc-info" }[issue.severity] || "";
+        const sevIcon  = { error: "🔴", warning: "⚠️", info: "ℹ️" }[issue.severity] || "•";
+        return `<div class="pcp-erc-issue ${sevClass}">` +
+          `<div class="pcp-erc-issue-top"><span class="pcp-erc-sev">${sevIcon}</span><span class="pcp-erc-comp">${escapeHtml(issue.component || "")}</span></div>` +
+          `<div class="pcp-erc-msg">${escapeHtml(issue.message || "")}</div>` +
+          (issue.fix ? `<div class="pcp-erc-fix">→ ${escapeHtml(issue.fix)}</div>` : "") +
+        `</div>`;
+      }).join("");
+  }
+
+  function renderLayoutCard(body, d) {
+    const rows = [
+      d.layer_stackup && rSection(`Layer Stackup — ${d.layer_stackup.layers}L`,
+        `<p class="pcb-ma-summary">${escapeHtml(d.layer_stackup.description || "")}</p>` +
+        `<p class="pcb-ma-note">${escapeHtml(d.layer_stackup.rationale || "")}</p>`
+      ),
+      d.placement_sequence?.length && rSection("Placement Sequence",
+        d.placement_sequence.map(s =>
+          `<div class="pcb-ma-row-item"><strong>${s.step}. ${escapeHtml(s.group)}</strong> — ${escapeHtml(s.components || "")}<div class="pcb-ma-comp-reason">${escapeHtml(s.tip || "")}</div></div>`
+        ).join("")
+      ),
+      d.trace_widths?.length && rSection("Trace Widths",
+        `<table class="pcb-ma-table"><thead><tr><th>Net Class</th><th>Min</th><th>Recommended</th><th>Reason</th></tr></thead><tbody>` +
+        d.trace_widths.map(t =>
+          `<tr><td>${escapeHtml(t.net_class)}</td><td>${escapeHtml(t.min_mm)} mm</td><td>${escapeHtml(t.recommended_mm)} mm</td><td>${escapeHtml(t.reason)}</td></tr>`
+        ).join("") +
+        `</tbody></table>`
+      ),
+      d.critical_routes?.length && rSection("Critical Routes", d.critical_routes.map(r =>
+        `<div class="pcb-ma-row-item">• <strong>${escapeHtml(r.signal)}</strong>: ${escapeHtml(r.rule)}<div class="pcb-ma-comp-reason">${escapeHtml(r.why)}</div></div>`
+      ).join("")),
+      d.ground_strategy && rSection("Ground Strategy", `<p class="pcb-ma-summary">${escapeHtml(d.ground_strategy)}</p>`),
+      d.emi_notes?.length   && rSection("EMI Guidelines", rBullets(d.emi_notes)),
+      d.thermal_notes?.length && rSection("Thermal Notes", rBullets(d.thermal_notes)),
+      d.dfm_checklist?.length && rSection("DFM Checklist",
+        `<table class="pcb-ma-table"><thead><tr><th>Check</th><th>Spec</th></tr></thead><tbody>` +
+        d.dfm_checklist.map(c => `<tr><td>${escapeHtml(c.check)}</td><td>${escapeHtml(c.spec)}</td></tr>`).join("") +
+        `</tbody></table>`
+      ),
+    ].filter(Boolean).join("");
+    body.innerHTML = rows || `<p class="pcb-ma-empty">No layout data.</p>`;
+  }
+
+  // ── Result render helpers ────────────────────────────────────────────────────
+
+  function rSection(title, content) {
+    return `<div class="pcb-ma-section"><div class="pcb-ma-section-title">${escapeHtml(title)}</div>${content}</div>`;
+  }
+  function rField(label, value) {
+    return `<div class="pcb-ma-field"><span class="pcb-ma-field-label">${escapeHtml(label)}:</span> <span class="pcb-ma-field-value">${escapeHtml(String(value))}</span></div>`;
+  }
+  function rBullets(arr) {
+    return arr.map(s => `<div class="pcb-ma-row-item">• ${escapeHtml(String(s))}</div>`).join("");
+  }
+
+  // ── Multi-agent tab event binding ────────────────────────────────────────────
+
+  maRunBtn.addEventListener("click", () => onMultiAgentRun());
+  maGoalInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onMultiAgentRun(); }
+  });
 
   // ── 이벤트 바인딩 ────────────────────────────────────────────────────────
   chatSend.addEventListener("click", onChatSend);
