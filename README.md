@@ -273,8 +273,4 @@ Swagger docs at `http://localhost:8000/docs`.
 | UI | IBM Plex Sans KR, IBM Plex Mono |
 | Backend (optional) | Python 3, FastAPI, Uvicorn, Pydantic v2 |
 
----
 
-## License
-
-MIT License
